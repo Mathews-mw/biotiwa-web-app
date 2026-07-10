@@ -1,0 +1,321 @@
+'use client';
+
+import { useForm } from 'react-hook-form';
+import { useMemo, useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter, useSearchParams } from 'next/navigation';
+
+import { getCheckoutSelection } from '@/features/checkout/lib/get-checkout-selection';
+import { useCreateCheckoutSessionMutation } from '@/features/commerce/hooks/use-commerce-queries';
+import {
+	checkoutSchema,
+	ICheckoutFormInput,
+	type ICheckoutFormData,
+} from '@/features/checkout/schemas/checkout-schema';
+
+import { Field } from '@/components/field';
+import { Card } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { CheckoutSummary } from '@/features/checkout/components/checkout-summary';
+
+import { ArrowLeft, ShieldCheck } from 'lucide-react';
+
+export default function CheckoutScreen() {
+	const router = useRouter();
+	const searchParams = useSearchParams();
+	const [isSubmittingPreview, setIsSubmittingPreview] = useState(false);
+
+	const marketParam = searchParams.get('market');
+	const offerParam = searchParams.get('offer');
+	const bumpParam = searchParams.get('bump');
+
+	const selection = useMemo(() => {
+		return getCheckoutSelection({
+			marketCode: marketParam,
+			offerId: offerParam,
+			includeOrderBump: bumpParam === '1',
+		});
+	}, [marketParam, offerParam, bumpParam]);
+
+	const { watch, handleSubmit, formState, register, setValue } = useForm<
+		ICheckoutFormInput,
+		unknown,
+		ICheckoutFormData
+	>({
+		resolver: zodResolver(checkoutSchema),
+		defaultValues: {
+			market: selection.market.code,
+			fullName: '',
+			email: '',
+			age: undefined,
+			sportPractice: '',
+			postalCode: '',
+			addressLine1: '',
+			number: '',
+			addressLine2: '',
+			district: '',
+			city: '',
+			state: '',
+			acceptPrivacy: false,
+		},
+	});
+
+	const acceptPrivacyValue = watch('acceptPrivacy');
+
+	const createCheckoutSessionMutation = useCreateCheckoutSessionMutation();
+
+	async function onHandleSubmit(data: ICheckoutFormData) {
+		setIsSubmittingPreview(true);
+
+		const previewOrderId = crypto.randomUUID();
+
+		console.log('Checkout preview payload', {
+			customer: data,
+			market: selection.market,
+			offer: selection.offer,
+			orderBump: selection.orderBump,
+			summary: selection.summary,
+			previewOrderId,
+		});
+
+		const result = await createCheckoutSessionMutation.mutateAsync({
+			market: selection.market.code,
+			offerId: offerParam ?? '',
+			includeOrderBump: bumpParam === '1',
+			customer: {
+				fullName: data.fullName,
+				email: data.email,
+				age: data.age,
+				sportPractice: data.sportPractice,
+				postalCode: data.postalCode,
+				addressLine1: data.addressLine1,
+				number: data.number,
+				addressLine2: data.addressLine2,
+				district: data.district,
+				city: data.city,
+				state: data.state,
+				acceptPrivacy: data.acceptPrivacy,
+			},
+		});
+
+		await new Promise((resolve) => setTimeout(resolve, 700));
+
+		// router.push(`/success?preview=1&order=${previewOrderId}`);
+		router.push(result.checkoutUrl);
+	}
+
+	const locale = selection.market.locale;
+	const currency = selection.market.currency;
+	const isBrazil = selection.market.code === 'BR';
+
+	return (
+		<main className="min-h-svh bg-[#0d0710] px-6 py-8 text-white lg:px-10 lg:py-12">
+			<div className="mx-auto max-w-7xl">
+				<button
+					type="button"
+					onClick={() => router.back()}
+					className="inline-flex items-center gap-2 text-sm text-white/50 transition-colors hover:text-white"
+				>
+					<ArrowLeft className="size-4" />
+					Voltar para a oferta
+				</button>
+
+				<div className="mt-10 grid gap-10 lg:grid-cols-[1fr_26rem] lg:items-start">
+					<section>
+						<div>
+							<p className="text-brand-gold text-xs font-medium tracking-[0.3em] uppercase">Checkout seguro</p>
+
+							<h1 className="mt-4 text-4xl leading-none font-medium tracking-tighter text-balance sm:text-5xl">
+								Complete seus dados para continuar.
+							</h1>
+
+							<p className="mt-5 max-w-2xl text-base leading-7 text-white/50">
+								Esta é uma versão de demonstração do checkout. Depois, este botão será conectado à API e redirecionará
+								para o Stripe.
+							</p>
+						</div>
+
+						<form onSubmit={handleSubmit(onHandleSubmit)} className="mt-10 grid gap-8" data-clarity-mask="true">
+							<Card className="border-white/10 bg-white/4 p-6 text-white">
+								<div className="flex items-start justify-between gap-6">
+									<div>
+										<h2 className="text-xl font-medium">Dados do comprador</h2>
+
+										<p className="mt-2 text-sm leading-6 text-white/45">
+											Usaremos esses dados para identificar o pedido e enviar as próximas informações da compra.
+										</p>
+									</div>
+
+									<ShieldCheck className="text-brand-gold mt-1 size-5" />
+								</div>
+
+								<div className="mt-7 grid gap-5 sm:grid-cols-2">
+									<Field label="Nome completo" error={formState.errors.fullName?.message}>
+										<Input
+											placeholder="Seu nome"
+											className="border-white/10 bg-white/5 text-white placeholder:text-white/25"
+											{...register('fullName')}
+										/>
+									</Field>
+
+									<Field label="E-mail" error={formState.errors.email?.message}>
+										<Input
+											type="email"
+											placeholder="voce@email.com"
+											className="border-white/10 bg-white/5 text-white placeholder:text-white/25"
+											{...register('email')}
+										/>
+									</Field>
+
+									<Field label="Idade" error={formState.errors.age?.message}>
+										<Input
+											type="number"
+											inputMode="numeric"
+											placeholder="Ex: 32"
+											className="border-white/10 bg-white/5 text-white placeholder:text-white/25"
+											{...register('age')}
+										/>
+									</Field>
+
+									<Field label="Esporte ou rotina de atividade" error={formState.errors.sportPractice?.message}>
+										<Input
+											placeholder="Ex: caminhada, academia, corrida"
+											className="border-white/10 bg-white/5 text-white placeholder:text-white/25"
+											{...register('sportPractice')}
+										/>
+									</Field>
+								</div>
+							</Card>
+
+							<Card className="border-white/10 bg-white/4 p-6 text-white">
+								<h2 className="text-xl font-medium">Endereço de entrega</h2>
+
+								<p className="mt-2 text-sm leading-6 text-white/45">
+									Mercado selecionado: <span className="font-medium text-white">{selection.market.label}</span>
+								</p>
+
+								<div className="mt-7 grid gap-5 sm:grid-cols-2">
+									<Field label={isBrazil ? 'CEP' : 'ZIP code'} error={formState.errors.postalCode?.message}>
+										<Input
+											placeholder={isBrazil ? '00000-000' : '00000'}
+											className="border-white/10 bg-white/5 text-white placeholder:text-white/25"
+											{...register('postalCode')}
+										/>
+									</Field>
+
+									<Field label={isBrazil ? 'Estado' : 'State'} error={formState.errors.state?.message}>
+										<Input
+											placeholder={isBrazil ? 'AM' : 'FL'}
+											className="border-white/10 bg-white/5 text-white placeholder:text-white/25"
+											{...register('state')}
+										/>
+									</Field>
+
+									<Field
+										label={isBrazil ? 'Endereço' : 'Address line 1'}
+										error={formState.errors.addressLine1?.message}
+										className="sm:col-span-2"
+									>
+										<Input
+											placeholder={isBrazil ? 'Rua, avenida ou logradouro' : 'Street address'}
+											className="border-white/10 bg-white/5 text-white placeholder:text-white/25"
+											{...register('addressLine1')}
+										/>
+									</Field>
+
+									<Field label={isBrazil ? 'Número' : 'Number / Apt'} error={formState.errors.number?.message}>
+										<Input
+											placeholder={isBrazil ? '123' : 'Apt 203'}
+											className="border-white/10 bg-white/5 text-white placeholder:text-white/25"
+											{...register('number')}
+										/>
+									</Field>
+
+									<Field label="Complemento" error={formState.errors.addressLine2?.message}>
+										<Input
+											placeholder="Opcional"
+											className="border-white/10 bg-white/5 text-white placeholder:text-white/25"
+											{...register('addressLine2')}
+										/>
+									</Field>
+
+									{isBrazil ? (
+										<Field label="Bairro" error={formState.errors.district?.message}>
+											<Input
+												placeholder="Nome do bairro"
+												className="border-white/10 bg-white/5 text-white placeholder:text-white/25"
+												{...register('district')}
+											/>
+										</Field>
+									) : null}
+
+									<Field
+										label={isBrazil ? 'Cidade' : 'City'}
+										error={formState.errors.city?.message}
+										className={isBrazil ? undefined : 'sm:col-span-2'}
+									>
+										<Input
+											placeholder={isBrazil ? 'Manaus' : 'Miami'}
+											className="border-white/10 bg-white/5 text-white placeholder:text-white/25"
+											{...register('city')}
+										/>
+									</Field>
+								</div>
+							</Card>
+
+							<Card className="border-white/10 bg-white/4 p-6 text-white">
+								<div className="flex items-start gap-3">
+									<Checkbox
+										id="acceptPrivacy"
+										checked={acceptPrivacyValue}
+										onCheckedChange={(checked) => {
+											setValue('acceptPrivacy', checked === true, {
+												shouldValidate: true,
+											});
+										}}
+										className="data-[state=checked]:border-brand-gold data-[state=checked]:bg-brand-gold mt-1 border-white/30"
+									/>
+
+									<div>
+										<Label htmlFor="acceptPrivacy" className="cursor-pointer text-sm leading-6 text-white/70">
+											Li e aceito os Termos de Uso e a Política de Privacidade, autorizando o uso dos dados informados
+											para processamento do pedido.
+										</Label>
+
+										{formState.errors.acceptPrivacy?.message ? (
+											<p className="mt-2 text-sm text-red-300">{formState.errors.acceptPrivacy.message}</p>
+										) : null}
+									</div>
+								</div>
+							</Card>
+
+							<div className="lg:hidden">
+								<CheckoutSummary locale={locale} currency={currency} selection={selection} />
+							</div>
+
+							{createCheckoutSessionMutation.isError ? (
+								<p className="text-sm text-red-300">Não foi possível iniciar o pagamento. Tente novamente.</p>
+							) : null}
+
+							<Button
+								type="submit"
+								size="lg"
+								disabled={createCheckoutSessionMutation.isPending}
+								className="rounded-full bg-[#f5efe4] text-[#16091f] hover:bg-white"
+							>
+								{createCheckoutSessionMutation.isPending ? 'Preparando pagamento...' : 'Continuar para pagamento'}
+							</Button>
+						</form>
+					</section>
+
+					<aside className="hidden lg:sticky lg:top-8 lg:block">
+						<CheckoutSummary locale={locale} currency={currency} selection={selection} />
+					</aside>
+				</div>
+			</div>
+		</main>
+	);
+}
