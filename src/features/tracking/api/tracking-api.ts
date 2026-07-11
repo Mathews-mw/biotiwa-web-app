@@ -1,5 +1,5 @@
-import { BIOTIWA_MOCK_EVENTS_KEY } from '../lib/get-or-create-session-id';
-import type { ITrackEventInput } from '../types/tracking';
+import { MOCK_EVENTS_STORAGE_KEY } from '../constants/tracking-storage';
+import type { ITrackedEvent, ITrackEventInput } from '../types/tracking';
 
 function sleep(ms: number) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
@@ -16,9 +16,11 @@ export async function trackEvent(input: ITrackEventInput) {
 	console.log('Mock funnel event', event);
 
 	if (typeof window !== 'undefined') {
-		const currentEvents = JSON.parse(window.localStorage.getItem(BIOTIWA_MOCK_EVENTS_KEY) ?? '[]') as unknown[];
+		// Apenas para conseguir abrir o console e verificar os eventos.
+		// Todo: vai ser trocado por uma integração real com o Segment ou outro serviço de tracking.
+		const currentEvents = JSON.parse(window.localStorage.getItem(MOCK_EVENTS_STORAGE_KEY) ?? '[]') as ITrackedEvent[];
 
-		window.localStorage.setItem(BIOTIWA_MOCK_EVENTS_KEY, JSON.stringify([...currentEvents, event]));
+		window.localStorage.setItem(MOCK_EVENTS_STORAGE_KEY, JSON.stringify([...currentEvents, event]));
 	}
 
 	return {

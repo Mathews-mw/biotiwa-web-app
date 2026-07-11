@@ -1,5 +1,4 @@
-export const SESSION_STORAGE_KEY = 'biotiwa_session_id';
-export const BIOTIWA_MOCK_EVENTS_KEY = 'biotiwa_mock_events';
+import { SESSION_STORAGE_KEY } from '../constants/tracking-storage';
 
 export function getOrCreateSessionId() {
 	if (typeof window === 'undefined') {

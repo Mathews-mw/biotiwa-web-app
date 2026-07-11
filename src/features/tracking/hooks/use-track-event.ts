@@ -15,6 +15,11 @@ type TrackParams = {
 export function useTrackEvent() {
 	const mutation = useMutation({
 		mutationFn: trackEvent,
+		onError: (error) => {
+			if (process.env.NODE_ENV === 'development') {
+				console.error('Failed to track event', error);
+			}
+		},
 	});
 
 	function track(params: TrackParams) {

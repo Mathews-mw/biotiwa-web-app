@@ -13,3 +13,7 @@ export type ITrackEventInput = {
 	market?: 'BR' | 'US';
 	payload?: Record<string, unknown>;
 };
+
+export type ITrackedEvent = ITrackEventInput & {
+	occurredAt: string;
+};
