@@ -8,13 +8,14 @@ import { useEffect, useMemo, useState } from 'react';
 import type { IMarketCode } from '../types/commerce';
 
 import { cn } from '@/lib/utils';
+import { formatMoney } from '../lib/format-money';
+import { useTrackEvent } from '@/features/tracking/hooks/use-track-event';
+import { useCheckoutQuoteQuery, usePublicOffersQuery } from '@/features/commerce/hooks/use-commerce-queries';
 
 import { SummaryRow } from './summary-row';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { formatMoney } from '@/features/lib/format-money';
-import { useCheckoutQuoteQuery, usePublicOffersQuery } from '@/features/commerce/hooks/use-commerce-queries';
 
 const availableMarkets = [
 	{
@@ -36,6 +37,8 @@ export function ProductOfferSection() {
 
 	const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
 	const [includeOrderBump, setIncludeOrderBump] = useState(false);
+
+	const { track } = useTrackEvent();
 
 	const offersQuery = usePublicOffersQuery({
 		market: selectedMarketCode,
@@ -91,12 +94,32 @@ export function ProductOfferSection() {
 		setSelectedMarketCode(marketCode);
 		setSelectedOfferId(null);
 		setIncludeOrderBump(false);
+
+		track({
+			eventType: 'market_changed',
+			market: marketCode,
+			payload: {
+				previousMarket: selectedMarketCode,
+				nextMarket: marketCode,
+			},
+		});
 	}
 
 	function handleGoToCheckout() {
 		if (!selectedOfferId) {
 			return;
 		}
+
+		track({
+			eventType: 'checkout_started',
+			market: selectedMarketCode,
+			payload: {
+				offerId: selectedOfferId,
+				includeOrderBump,
+				totalAmount: quoteQuery.data?.summary.totalAmount,
+				currency: quoteQuery.data?.summary.currency,
+			},
+		});
 
 		const searchParams = new URLSearchParams({
 			market: selectedMarketCode,
@@ -106,6 +129,21 @@ export function ProductOfferSection() {
 
 		router.push(`/checkout?${searchParams.toString()}`);
 	}
+
+	useEffect(() => {
+		if (!offersQuery.data) {
+			return;
+		}
+
+		track({
+			eventType: 'product_viewed',
+			market: selectedMarketCode,
+			payload: {
+				productId: offersQuery.data.product.id,
+				productSku: offersQuery.data.product.sku,
+			},
+		});
+	}, [offersQuery.data, selectedMarketCode]);
 
 	if (offersQuery.isLoading) {
 		return (
@@ -218,7 +256,20 @@ export function ProductOfferSection() {
 									<button
 										key={offer.id}
 										type="button"
-										onClick={() => setSelectedOfferId(offer.id)}
+										onClick={() => {
+											setSelectedOfferId(offer.id);
+
+											track({
+												eventType: 'offer_selected',
+												market: selectedMarketCode,
+												payload: {
+													offerId: offer.id,
+													offerName: offer.name,
+													quantity: offer.quantity,
+													discountPercent: offer.discountPercent,
+												},
+											});
+										}}
 										className={cn(
 											'relative rounded-3xl border p-5 text-left transition-all',
 											isSelected ? 'border-brand-gold bg-white/8' : 'border-white/10 bg-white/2.5 hover:border-white/25'
@@ -269,7 +320,23 @@ export function ProductOfferSection() {
 
 							<button
 								type="button"
-								onClick={() => setIncludeOrderBump((current) => !current)}
+								onClick={() => {
+									setIncludeOrderBump((current) => {
+										const nextValue = !current;
+
+										track({
+											eventType: 'order_bump_changed',
+											market: selectedMarketCode,
+											payload: {
+												orderBumpId: currentOrderBump.id,
+												orderBumpName: currentOrderBump.name,
+												included: nextValue,
+											},
+										});
+
+										return nextValue;
+									});
+								}}
 								className={cn(
 									'flex w-full items-start gap-4 rounded-3xl border p-5 text-left transition-all',
 									includeOrderBump

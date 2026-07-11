@@ -1,17 +1,22 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
-import { useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-import { getCheckoutSelection } from '@/features/checkout/lib/get-checkout-selection';
-import { useCreateCheckoutSessionMutation } from '@/features/commerce/hooks/use-commerce-queries';
+import type { IMarketCode } from '@/features/commerce/types/commerce';
 import {
 	checkoutSchema,
-	ICheckoutFormInput,
+	type ICheckoutFormInput,
 	type ICheckoutFormData,
 } from '@/features/checkout/schemas/checkout-schema';
+
+import { useTrackEvent } from '@/features/tracking/hooks/use-track-event';
+import {
+	useCheckoutQuoteQuery,
+	useCreateCheckoutSessionMutation,
+} from '@/features/commerce/hooks/use-commerce-queries';
 
 import { Field } from '@/components/field';
 import { Card } from '@/components/ui/card';
@@ -20,25 +25,38 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CheckoutSummary } from '@/features/checkout/components/checkout-summary';
+import { CheckoutStateMessage } from '@/features/checkout/components/checkout-state-message';
 
 import { ArrowLeft, ShieldCheck } from 'lucide-react';
 
 export default function CheckoutScreen() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
-	const [isSubmittingPreview, setIsSubmittingPreview] = useState(false);
+	const { track } = useTrackEvent();
 
 	const marketParam = searchParams.get('market');
 	const offerParam = searchParams.get('offer');
 	const bumpParam = searchParams.get('bump');
 
-	const selection = useMemo(() => {
-		return getCheckoutSelection({
-			marketCode: marketParam,
+	const selectedMarketCode: IMarketCode = marketParam === 'US' ? 'US' : 'BR';
+	const includeOrderBump = bumpParam === '1';
+
+	const quoteInput = useMemo(() => {
+		if (!offerParam) {
+			return null;
+		}
+
+		return {
+			market: selectedMarketCode,
 			offerId: offerParam,
-			includeOrderBump: bumpParam === '1',
-		});
-	}, [marketParam, offerParam, bumpParam]);
+			includeOrderBump,
+		};
+	}, [selectedMarketCode, offerParam, includeOrderBump]);
+
+	const quoteQuery = useCheckoutQuoteQuery(quoteInput);
+	const createCheckoutSessionMutation = useCreateCheckoutSessionMutation();
+
+	const selection = quoteQuery.data;
 
 	const { watch, handleSubmit, formState, register, setValue } = useForm<
 		ICheckoutFormInput,
@@ -47,7 +65,7 @@ export default function CheckoutScreen() {
 	>({
 		resolver: zodResolver(checkoutSchema),
 		defaultValues: {
-			market: selection.market.code,
+			market: selectedMarketCode,
 			fullName: '',
 			email: '',
 			age: undefined,
@@ -65,26 +83,24 @@ export default function CheckoutScreen() {
 
 	const acceptPrivacyValue = watch('acceptPrivacy');
 
-	const createCheckoutSessionMutation = useCreateCheckoutSessionMutation();
-
 	async function onHandleSubmit(data: ICheckoutFormData) {
-		setIsSubmittingPreview(true);
+		if (!quoteInput) {
+			return;
+		}
 
-		const previewOrderId = crypto.randomUUID();
-
-		console.log('Checkout preview payload', {
-			customer: data,
-			market: selection.market,
-			offer: selection.offer,
-			orderBump: selection.orderBump,
-			summary: selection.summary,
-			previewOrderId,
+		track({
+			eventType: 'checkout_submitted',
+			market: selectedMarketCode,
+			payload: {
+				offerId: quoteInput.offerId,
+				includeOrderBump: quoteInput.includeOrderBump,
+				totalAmount: selection?.summary.totalAmount,
+				currency: selection?.summary.currency,
+			},
 		});
 
 		const result = await createCheckoutSessionMutation.mutateAsync({
-			market: selection.market.code,
-			offerId: offerParam ?? '',
-			includeOrderBump: bumpParam === '1',
+			...quoteInput,
 			customer: {
 				fullName: data.fullName,
 				email: data.email,
@@ -101,15 +117,43 @@ export default function CheckoutScreen() {
 			},
 		});
 
-		await new Promise((resolve) => setTimeout(resolve, 700));
-
-		// router.push(`/success?preview=1&order=${previewOrderId}`);
 		router.push(result.checkoutUrl);
 	}
 
-	const locale = selection.market.locale;
-	const currency = selection.market.currency;
-	const isBrazil = selection.market.code === 'BR';
+	if (!offerParam) {
+		return (
+			<CheckoutStateMessage
+				title="Oferta não encontrada"
+				description="Volte para a página inicial e selecione uma oferta antes de continuar."
+				actionLabel="Voltar para a oferta"
+				actionHref="/#oferta"
+			/>
+		);
+	}
+
+	if (quoteQuery.isLoading || !selection) {
+		return (
+			<CheckoutStateMessage
+				title="Preparando seu checkout"
+				description="Estamos calculando os valores da sua oferta."
+			/>
+		);
+	}
+
+	if (quoteQuery.isError) {
+		return (
+			<CheckoutStateMessage
+				title="Não foi possível carregar o checkout"
+				description="Tente voltar para a oferta e selecionar novamente."
+				actionLabel="Voltar para a oferta"
+				actionHref="/#oferta"
+			/>
+		);
+	}
+
+	const locale = selection?.market.locale;
+	const currency = selection?.market.currency;
+	const isBrazil = selection?.market.code === 'BR';
 
 	return (
 		<main className="min-h-svh bg-[#0d0710] px-6 py-8 text-white lg:px-10 lg:py-12">
@@ -297,7 +341,9 @@ export default function CheckoutScreen() {
 							</div>
 
 							{createCheckoutSessionMutation.isError ? (
-								<p className="text-sm text-red-300">Não foi possível iniciar o pagamento. Tente novamente.</p>
+								<p className="rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+									Não foi possível iniciar o pagamento. Revise os dados e tente novamente.
+								</p>
 							) : null}
 
 							<Button

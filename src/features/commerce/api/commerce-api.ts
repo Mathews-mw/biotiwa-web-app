@@ -1,5 +1,5 @@
+import { calculateOrderSummary } from '../lib/calculate-order-summary';
 import { markets, offers, orderBumps, product } from '../data/mock-catalog';
-import { calculateOrderSummary } from '@/features/lib/calculate-order-summary';
 
 import type {
 	ICheckoutQuoteInput,

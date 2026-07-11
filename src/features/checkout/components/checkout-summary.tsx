@@ -1,8 +1,9 @@
 import Image from 'next/image';
 
-import { formatMoney } from '@/features/lib/format-money';
 import { product } from '@/features/commerce/data/mock-catalog';
-import { getCheckoutSelection } from '../lib/get-checkout-selection';
+import { formatMoney } from '@/features/commerce/lib/format-money';
+
+import type { ICheckoutQuoteResponse } from '@/features/commerce/api/commerce-api-types';
 
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -13,7 +14,7 @@ import { LockKeyhole } from 'lucide-react';
 type CheckoutSummaryProps = {
 	locale: string;
 	currency: 'BRL' | 'USD';
-	selection: ReturnType<typeof getCheckoutSelection>;
+	selection: ICheckoutQuoteResponse;
 };
 
 export function CheckoutSummary({ locale, currency, selection }: CheckoutSummaryProps) {
