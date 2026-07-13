@@ -4,7 +4,9 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono, Inter } from 'next/font/google';
 
 import { cn } from '@/lib/utils';
+
 import { QueryProvider } from '@/providers/query-provider';
+import { ConsentProvider } from '@/features/consent/context/consent-provider';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -19,8 +21,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-	title: 'Açai Pulse',
-	description: 'BIOTIWA - AMAZON LABS',
+	title: 'BIOTIWA - Açai Pulse',
+	description: 'A força da Amazônia em uma nova forma.',
 };
 
 export default function RootLayout({
@@ -34,7 +36,9 @@ export default function RootLayout({
 			className={cn('h-full', 'antialiased', geistSans.variable, geistMono.variable, 'font-sans', inter.variable)}
 		>
 			<body className="flex min-h-full flex-col">
-				<QueryProvider>{children}</QueryProvider>
+				<QueryProvider>
+					<ConsentProvider>{children}</ConsentProvider>
+				</QueryProvider>
 			</body>
 		</html>
 	);

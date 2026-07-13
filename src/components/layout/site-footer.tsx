@@ -1,4 +1,5 @@
 import { navigationItems } from '@/content/landing-page';
+import { ConsentSettingsButton } from '@/features/consent/components/consent-settings-button';
 
 export function SiteFooter() {
 	const currentYear = new Date().getFullYear();
@@ -10,7 +11,7 @@ export function SiteFooter() {
 					<div>
 						<a href="#top" aria-label="Açaípulse — início" className="text-2xl font-semibold tracking-tighter">
 							Açaí
-							<span className="text-[#b86bd1]">pulse</span>
+							<span className="text-brand-violet">pulse</span>
 							<sup className="ms-0.5 text-[0.4em] font-normal">®</sup>
 						</a>
 
@@ -32,6 +33,8 @@ export function SiteFooter() {
 					<p>© {currentYear} Açaípulse®. Todos os direitos reservados.</p>
 
 					<p>Biotiwa · Amazon Labs</p>
+
+					<ConsentSettingsButton />
 				</div>
 			</div>
 		</footer>
