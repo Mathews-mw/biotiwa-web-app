@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 
 import { QueryProvider } from '@/providers/query-provider';
 import { ConsentProvider } from '@/features/consent/context/consent-provider';
+import { AuthSessionSync } from '@/features/auth/components/auth-session-sync';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -37,6 +38,8 @@ export default function RootLayout({
 		>
 			<body className="flex min-h-full flex-col">
 				<QueryProvider>
+					<AuthSessionSync />
+
 					<ConsentProvider>{children}</ConsentProvider>
 				</QueryProvider>
 			</body>
