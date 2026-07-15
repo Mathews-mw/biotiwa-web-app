@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 
 import { AuthGuard } from '@/features/auth/components/auth-guard';
-import CheckoutScreen from '@/features/checkout/components/checkout-screen';
+import { CheckoutScreen } from '@/features/checkout/components/checkout-screen';
 
 export default function CheckoutPage() {
 	return (
