@@ -10,6 +10,7 @@ import { navigationItems } from '@/content/landing-page';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 import { Menu } from 'lucide-react';
+import { UserMenu } from '@/features/account/components/user-menu';
 
 export function SiteHeader() {
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -41,7 +42,7 @@ export function SiteHeader() {
 					className="relative z-10 text-xl font-semibold tracking-[-0.04em] text-[#f7f1e8]"
 				>
 					Açaí
-					<span className="text-[#b86bd1]">pulse</span>
+					<span className="text-brand-violet">pulse</span>
 					<sup className="ms-0.5 text-[0.45em] font-normal">®</sup>
 				</a>
 
@@ -86,7 +87,7 @@ export function SiteHeader() {
 						<SheetHeader className="text-start">
 							<SheetTitle className="text-xl text-white">
 								Açaí
-								<span className="text-[#b86bd1]">pulse</span>
+								<span className="text-brand-violet">pulse</span>
 							</SheetTitle>
 
 							<SheetDescription className="text-white/50">Conheça o produto e sua origem.</SheetDescription>
@@ -119,6 +120,8 @@ export function SiteHeader() {
 						</nav>
 					</SheetContent>
 				</Sheet>
+
+				<UserMenu />
 			</div>
 		</header>
 	);

@@ -19,12 +19,12 @@ export default function CancelPage() {
 				</h1>
 
 				<p className="mt-6 text-lg leading-8 text-white/55">
-					Você pode retornar para a oferta e revisar os dados antes de tentar novamente.
+					Seu carrinho foi mantido. Você pode retornar ao checkout para revisar os dados e tentar novamente.
 				</p>
 
 				<div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
 					<Button asChild size="lg" className="rounded-full bg-[#f5efe4] text-[#16091f] hover:bg-white">
-						<Link href="/#oferta">Voltar para oferta</Link>
+						<Link href="/checkout">Voltar para o checkout</Link>
 					</Button>
 
 					<Button
@@ -33,7 +33,7 @@ export default function CancelPage() {
 						variant="outline"
 						className="rounded-full border-white/20 bg-white/5 text-white hover:bg-white/10 hover:text-white"
 					>
-						<Link href="/">Ir para o início</Link>
+						<Link href="/#oferta">Alterar oferta</Link>
 					</Button>
 				</div>
 			</section>

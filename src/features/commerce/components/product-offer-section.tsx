@@ -9,7 +9,10 @@ import type { IMarketCode } from '../types/commerce';
 
 import { cn } from '@/lib/utils';
 import { formatMoney } from '../lib/format-money';
+import { useSessionQuery } from '@/features/auth/hooks/use-auth-queries';
 import { useTrackEvent } from '@/features/tracking/hooks/use-track-event';
+import { buildCheckoutPath } from '@/features/checkout/lib/build-checkout-path';
+import { useSaveCartSelectionMutation } from '@/features/cart/hooks/use-cart-queries';
 import { useCheckoutQuoteQuery, usePublicOffersQuery } from '@/features/commerce/hooks/use-commerce-queries';
 
 import { SummaryRow } from './summary-row';
@@ -39,6 +42,8 @@ export function ProductOfferSection() {
 	const [includeOrderBump, setIncludeOrderBump] = useState(false);
 
 	const { track } = useTrackEvent();
+	const sessionQuery = useSessionQuery();
+	const saveCartSelectionMutation = useSaveCartSelectionMutation();
 
 	const offersQuery = usePublicOffersQuery({
 		market: selectedMarketCode,
@@ -105,7 +110,7 @@ export function ProductOfferSection() {
 		});
 	}
 
-	function handleGoToCheckout() {
+	async function handleGoToCheckout() {
 		if (!selectedOfferId) {
 			return;
 		}
@@ -121,13 +126,24 @@ export function ProductOfferSection() {
 			},
 		});
 
-		const searchParams = new URLSearchParams({
+		const nextCheckoutPath = buildCheckoutPath({
 			market: selectedMarketCode,
-			offer: selectedOfferId,
-			bump: includeOrderBump ? '1' : '0',
+			offerId: selectedOfferId,
+			includeOrderBump,
 		});
 
-		router.push(`/checkout?${searchParams.toString()}`);
+		const userId = sessionQuery.data?.session?.user.id;
+
+		if (userId) {
+			await saveCartSelectionMutation.mutateAsync({
+				userId,
+				market: selectedMarketCode,
+				offerId: selectedOfferId,
+				includeOrderBump,
+			});
+		}
+
+		router.push(nextCheckoutPath);
 	}
 
 	useEffect(() => {
@@ -192,7 +208,7 @@ export function ProductOfferSection() {
 					</p>
 
 					<div className="relative mt-12 aspect-4/5 max-w-md overflow-hidden rounded-[2rem] border border-white/10 bg-white/3">
-						<div className="absolute inset-[12%] rounded-full bg-[#8f3cab]/25 blur-[90px]" />
+						<div className="bg-brand-violet/25 absolute inset-[12%] rounded-full blur-[90px]" />
 
 						<Image
 							src={product.imageUrl}
@@ -436,11 +452,11 @@ export function ProductOfferSection() {
 
 								<Button
 									size="lg"
-									disabled={!selectedOfferId || quoteQuery.isFetching}
+									disabled={!selectedOfferId || quoteQuery.isFetching || saveCartSelectionMutation.isPending}
 									className="mt-7 w-full rounded-full bg-[#f5efe4] text-[#16091f] hover:bg-white"
 									onClick={handleGoToCheckout}
 								>
-									Continuar para checkout
+									{saveCartSelectionMutation.isPending ? 'Salvando carrinho...' : 'Continuar para checkout'}
 								</Button>
 							</>
 						)}

@@ -1,19 +1,36 @@
+'use client';
+
 import Link from 'next/link';
+import { useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+
+import { useSessionQuery } from '@/features/auth/hooks/use-auth-queries';
+import { useClearCartMutation } from '@/features/cart/hooks/use-cart-queries';
 
 import { Button } from '@/components/ui/button';
 
 import { CheckCircle2 } from 'lucide-react';
 
-type SuccessPageProps = {
-	searchParams: Promise<{
-		preview?: string;
-		order?: string;
-	}>;
-};
+export function SuccessScreen() {
+	const searchParams = useSearchParams();
 
-export default async function SuccessPage({ searchParams }: SuccessPageProps) {
-	const params = await searchParams;
-	const isPreview = params.preview === '1';
+	const sessionQuery = useSessionQuery();
+	const clearCartMutation = useClearCartMutation();
+
+	const isPreview = searchParams.get('preview') === '1';
+	const orderId = searchParams.get('order');
+
+	const userId = sessionQuery.data?.session?.user.id;
+
+	useEffect(() => {
+		if (!isPreview || !userId) {
+			return;
+		}
+
+		clearCartMutation.mutate({
+			userId,
+		});
+	}, [isPreview, userId]);
 
 	return (
 		<main className="flex min-h-svh items-center bg-[#0d0710] px-6 py-16 text-white">
@@ -36,15 +53,28 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
 						: 'Recebemos as informações da sua compra e enviaremos os próximos passos por e-mail.'}
 				</p>
 
-				{params.order ? (
+				{orderId ? (
 					<p className="mt-6 rounded-2xl border border-white/10 bg-white/4 px-5 py-4 font-mono text-xs text-white/45">
-						Preview order: {params.order}
+						Preview order: {orderId}
 					</p>
 				) : null}
 
-				<div className="mt-10">
+				{clearCartMutation.isPending ? (
+					<p className="mt-5 text-sm text-white/40">Limpando carrinho da sessão...</p>
+				) : null}
+
+				<div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
 					<Button asChild size="lg" className="rounded-full bg-[#f5efe4] text-[#16091f] hover:bg-white">
 						<Link href="/">Voltar para o início</Link>
+					</Button>
+
+					<Button
+						asChild
+						size="lg"
+						variant="outline"
+						className="rounded-full border-white/20 bg-white/5 text-white hover:bg-white/10 hover:text-white"
+					>
+						<Link href="/account">Ver minha conta</Link>
 					</Button>
 				</div>
 			</section>

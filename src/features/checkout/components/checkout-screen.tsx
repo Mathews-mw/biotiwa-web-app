@@ -14,6 +14,7 @@ import {
 
 import { useSessionQuery } from '@/features/auth/hooks/use-auth-queries';
 import { useTrackEvent } from '@/features/tracking/hooks/use-track-event';
+import { useCartQuery, useSaveCartSelectionMutation } from '@/features/cart/hooks/use-cart-queries';
 import {
 	useCheckoutQuoteQuery,
 	useCreateCheckoutSessionMutation,
@@ -25,6 +26,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { CheckoutOfferEditor } from './checkout-offer-editor';
 import { AuthGuard } from '@/features/auth/components/auth-guard';
 import { CheckoutSummary } from '@/features/checkout/components/checkout-summary';
 import { CheckoutStateMessage } from '@/features/checkout/components/checkout-state-message';
@@ -34,27 +36,39 @@ import { ArrowLeft, ShieldCheck } from 'lucide-react';
 export default function CheckoutScreen() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
+
 	const { track } = useTrackEvent();
 	const sessionQuery = useSessionQuery();
+
+	const user = sessionQuery.data?.session?.user ?? null;
+
+	const cartQuery = useCartQuery(user?.id ?? null);
+	const saveCartSelectionMutation = useSaveCartSelectionMutation();
+
+	const cart = cartQuery.data?.cart ?? null;
 
 	const marketParam = searchParams.get('market');
 	const offerParam = searchParams.get('offer');
 	const bumpParam = searchParams.get('bump');
 
-	const selectedMarketCode: IMarketCode = marketParam === 'US' ? 'US' : 'BR';
-	const includeOrderBump = bumpParam === '1';
+	const selectedMarketCode: IMarketCode =
+		marketParam === 'US' ? 'US' : marketParam === 'BR' ? 'BR' : (cart?.market ?? 'BR');
+
+	const selectedOfferId = offerParam ?? cart?.offerId ?? null;
+
+	const includeOrderBump = offerParam !== null ? bumpParam === '1' : (cart?.includeOrderBump ?? false);
 
 	const quoteInput = useMemo(() => {
-		if (!offerParam) {
+		if (!selectedOfferId) {
 			return null;
 		}
 
 		return {
 			market: selectedMarketCode,
-			offerId: offerParam,
+			offerId: selectedOfferId,
 			includeOrderBump,
 		};
-	}, [selectedMarketCode, offerParam, includeOrderBump]);
+	}, [selectedMarketCode, selectedOfferId, includeOrderBump]);
 
 	const quoteQuery = useCheckoutQuoteQuery(quoteInput);
 	const createCheckoutSessionMutation = useCreateCheckoutSessionMutation();
@@ -141,6 +155,19 @@ export default function CheckoutScreen() {
 		router.push(result.checkoutUrl);
 	}
 
+	useEffect(() => {
+		if (!user || !offerParam || !quoteInput) {
+			return;
+		}
+
+		saveCartSelectionMutation.mutate({
+			userId: user.id,
+			market: quoteInput.market,
+			offerId: quoteInput.offerId,
+			includeOrderBump: quoteInput.includeOrderBump,
+		});
+	}, [user?.id, offerParam, quoteInput?.market, quoteInput?.offerId, quoteInput?.includeOrderBump]);
+
 	if (!offerParam) {
 		return (
 			<CheckoutStateMessage
@@ -152,11 +179,31 @@ export default function CheckoutScreen() {
 		);
 	}
 
+	if (cartQuery.isLoading && !offerParam) {
+		return (
+			<CheckoutStateMessage
+				title="Carregando seu carrinho"
+				description="Estamos buscando a seleção salva na sua sessão."
+			/>
+		);
+	}
+
 	if (quoteQuery.isLoading || !selection) {
 		return (
 			<CheckoutStateMessage
 				title="Preparando seu checkout"
 				description="Estamos calculando os valores da sua oferta."
+			/>
+		);
+	}
+
+	if (!selectedOfferId) {
+		return (
+			<CheckoutStateMessage
+				title="Seu carrinho está vazio"
+				description="Volte para a oferta e selecione uma opção antes de continuar."
+				actionLabel="Voltar para a oferta"
+				actionHref="/#oferta"
 			/>
 		);
 	}
@@ -203,6 +250,15 @@ export default function CheckoutScreen() {
 										Esta é uma versão de demonstração do checkout. Depois, este botão será conectado à API e
 										redirecionará para o Stripe.
 									</p>
+								</div>
+
+								<div className="mt-10">
+									<CheckoutOfferEditor
+										marketCode={selectedMarketCode}
+										selectedOfferId={selectedOfferId}
+										includeOrderBump={includeOrderBump}
+										userId={user?.id ?? null}
+									/>
 								</div>
 
 								<form onSubmit={handleSubmit(onHandleSubmit)} className="mt-10 grid gap-8" data-clarity-mask="true">
