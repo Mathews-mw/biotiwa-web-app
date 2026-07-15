@@ -101,3 +101,7 @@ export function UserMenu() {
 		</DropdownMenu>
 	);
 }
+
+export function UserMenuFallback() {
+	return <div className="h-10 w-24 animate-pulse rounded-full bg-white/10" />;
+}

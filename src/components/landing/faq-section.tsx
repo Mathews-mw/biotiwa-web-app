@@ -7,9 +7,9 @@ export function FaqSection() {
 		<section id="faq" className="scroll-mt-24 bg-[#130917] px-6 py-28 text-white lg:px-10 lg:py-40">
 			<div className="mx-auto grid max-w-7xl gap-16 lg:grid-cols-[0.75fr_1.25fr] lg:gap-24">
 				<FadeIn>
-					<p className="text-xs font-medium tracking-[0.3em] text-[#d7b56d] uppercase">Perguntas frequentes</p>
+					<p className="text-brand-gold text-xs font-medium tracking-[0.3em] uppercase">Perguntas frequentes</p>
 
-					<h2 className="mt-6 max-w-md text-5xl leading-[1] font-medium tracking-[-0.055em] text-balance">
+					<h2 className="mt-6 max-w-md text-5xl leading-none font-medium tracking-[-0.055em] text-balance">
 						Informação clara, desde o início.
 					</h2>
 

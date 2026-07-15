@@ -1,16 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useMotionValueEvent, useScroll } from 'motion/react';
 
 import { cn } from '@/lib/utils';
 
 import { buttonVariants } from '@/components/ui/button';
 import { navigationItems } from '@/content/landing-page';
+import { UserMenu, UserMenuFallback } from '@/features/account/components/user-menu';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 import { Menu } from 'lucide-react';
-import { UserMenu } from '@/features/account/components/user-menu';
 
 export function SiteHeader() {
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -120,9 +120,11 @@ export function SiteHeader() {
 						</nav>
 					</SheetContent>
 				</Sheet>
-
-				<UserMenu />
 			</div>
+
+			<Suspense fallback={UserMenuFallback()}>
+				<UserMenu />
+			</Suspense>
 		</header>
 	);
 }
