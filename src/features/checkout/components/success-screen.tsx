@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 import { useSessionQuery } from '@/features/auth/hooks/use-auth-queries';
+import { clearStoredCheckoutDraft } from '../lib/checkout-draft-storage';
 import { useClearCartMutation } from '@/features/cart/hooks/use-cart-queries';
 
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,8 @@ export function SuccessScreen() {
 		clearCartMutation.mutate({
 			userId,
 		});
+
+		clearStoredCheckoutDraft(userId);
 	}, [isPreview, userId]);
 
 	return (

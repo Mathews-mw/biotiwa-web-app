@@ -33,7 +33,7 @@ export function ProductDetailsSection() {
 		>
 			<div className="mx-auto grid max-w-7xl items-center gap-16 lg:grid-cols-[0.9fr_1.1fr] lg:gap-24">
 				<FadeIn className="relative mx-auto aspect-4/5 w-full max-w-lg">
-					<div className="absolute inset-[10%] rounded-full bg-[#6d247d]/15 blur-[90px]" />
+					<div className="bg-brand-acai/15 absolute inset-[10%] rounded-full blur-[90px]" />
 
 					<div className="absolute inset-0 rounded-[3rem] border border-[#1b0d21]/10 bg-white/30" />
 
@@ -48,7 +48,7 @@ export function ProductDetailsSection() {
 
 				<div>
 					<FadeIn>
-						<p className="text-xs font-semibold tracking-[0.3em] text-[#6d247d] uppercase">Açaípulse®</p>
+						<p className="text-brand-acai text-xs font-semibold tracking-[0.3em] uppercase">Açaípulse®</p>
 
 						<h2 className="mt-6 text-5xl leading-[0.96] font-medium tracking-[-0.06em] text-balance sm:text-6xl lg:text-7xl">
 							Conheça cada detalhe.
@@ -70,7 +70,7 @@ export function ProductDetailsSection() {
 									delay={index * 0.08}
 									className="grid grid-cols-[auto_1fr] items-start gap-5 py-6"
 								>
-									<Icon className="mt-1 size-5 text-[#6d247d]" />
+									<Icon className="text-brand-acai mt-1 size-5" />
 
 									<div>
 										<h3 className="font-medium">{fact.title}</h3>

@@ -47,7 +47,7 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 
-	--color-brand-acai: var(--brand-açaí);
+	--color-brand-acai: var(--brand-acai);
   --color-brand-violet: var(--brand-violet);
   --color-brand-cream: var(--brand-cream);
   --color-brand-gold: var(--brand-gold);
@@ -87,7 +87,7 @@
   --sidebar-border: oklch(0.922 0.005 325.62);
   --sidebar-ring: oklch(0.711 0.019 323.02);
 
-	--brand-acaí: oklch(0.42 0.15 315);
+	--brand-acai: oklch(0.42 0.15 315);
   --brand-violet: oklch(0.67 0.2 315);
   --brand-cream: oklch(0.95 0.025 85);
   --brand-gold: oklch(0.76 0.1 80);

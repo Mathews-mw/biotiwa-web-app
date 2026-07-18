@@ -17,11 +17,11 @@ export function IngredientsSection() {
 		<section className="overflow-hidden bg-[#efe6d9] px-6 py-28 text-[#1b0d21] lg:px-10 lg:py-40">
 			<div className="mx-auto grid max-w-7xl items-center gap-16 lg:grid-cols-2 lg:gap-24">
 				<div>
-					<span className="inline-flex rounded-full border border-[#6d247d]/15 bg-[#6d247d]/5 px-4 py-2 text-xs font-medium tracking-[0.2em] text-[#6d247d] uppercase">
+					<span className="border-brand-acai/15 bg-brand-acai/5 text-brand-acai inline-flex rounded-full border px-4 py-2 text-xs font-medium tracking-[0.2em] uppercase">
 						Conteúdo provisório
 					</span>
 
-					<p className="mt-8 text-xs font-semibold tracking-[0.28em] text-[#6d247d] uppercase">Composição</p>
+					<p className="text-brand-acai mt-8 text-xs font-semibold tracking-[0.28em] uppercase">Composição</p>
 
 					<h2 className="mt-6 max-w-xl text-5xl leading-[0.98] font-medium tracking-[-0.055em] text-balance sm:text-6xl">
 						O que existe por trás da fórmula?
@@ -45,12 +45,12 @@ export function IngredientsSection() {
 									className="group flex w-full items-center justify-between border-b border-[#1b0d21]/15 py-6 text-start"
 								>
 									<div>
-										<span className="text-xs text-[#6d247d]/60">{String(index + 1).padStart(2, '0')}</span>
+										<span className="text-brand-acai/60 text-xs">{String(index + 1).padStart(2, '0')}</span>
 
 										<p
 											className={cn(
 												'mt-1 text-xl transition-colors',
-												isActive ? 'text-[#6d247d]' : 'text-[#1b0d21]/55 group-hover:text-[#1b0d21]'
+												isActive ? 'text-brand-acai' : 'text-[#1b0d21]/55 group-hover:text-[#1b0d21]'
 											)}
 										>
 											{ingredient.name}
@@ -60,7 +60,7 @@ export function IngredientsSection() {
 									<span
 										className={cn(
 											'size-2 rounded-full transition-all',
-											isActive ? 'scale-100 bg-[#6d247d]' : 'scale-50 bg-[#1b0d21]/20'
+											isActive ? 'bg-brand-acai scale-100' : 'scale-50 bg-[#1b0d21]/20'
 										)}
 									/>
 								</button>
@@ -110,7 +110,7 @@ export function IngredientsSection() {
 							transition={{ duration: 0.35 }}
 							className="absolute inset-x-8 bottom-8 z-10 rounded-3xl border border-white/10 bg-black/20 p-7 text-white backdrop-blur-xl sm:inset-x-10 sm:bottom-10"
 						>
-							<p className="text-xs tracking-[0.25em] text-[#d7b56d] uppercase">{activeIngredient.label}</p>
+							<p className="text-brand-gold text-xs tracking-[0.25em] uppercase">{activeIngredient.label}</p>
 
 							<h3 className="mt-3 text-3xl font-medium">{activeIngredient.name}</h3>
 

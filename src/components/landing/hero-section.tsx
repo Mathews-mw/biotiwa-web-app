@@ -159,7 +159,7 @@ export function HeroSection() {
 							<div className="absolute inset-[12%] rounded-full bg-[#8f3cab]/30 blur-[90px]" />
 
 							<Image
-								src="/images/product/acaipulse-bottle.png"
+								src="/images/product/bottle-no-bg.png"
 								alt="Embalagem do suplemento Açaípulse"
 								fill
 								priority

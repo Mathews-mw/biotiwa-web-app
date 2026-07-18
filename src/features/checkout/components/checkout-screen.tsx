@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import type { IMarketCode } from '@/features/commerce/types/commerce';
 import { checkoutSchema, type ICheckoutFormData, type ICheckoutFormInput } from '../schemas/checkout-schema';
 
+import { useCheckoutDraft } from '../hooks/use-checkout-draft';
 import { useSessionQuery } from '@/features/auth/hooks/use-auth-queries';
 import { useTrackEvent } from '@/features/tracking/hooks/use-track-event';
 import { CheckoutStepper, type CheckoutStep } from './checkout-stepper/checkout-stepper';
@@ -20,6 +21,7 @@ import {
 import { CheckoutSummary } from './checkout-summary';
 import { ReviewStep } from './checkout-stepper/review-step';
 import { AddressStep } from './checkout-stepper/address-step';
+import { CheckoutDraftStatus } from './checkout-draft-status';
 import { CheckoutStateMessage } from './checkout-state-message';
 import { CustomerStep } from './checkout-stepper/customer-step';
 import { CheckoutOfferStep } from './checkout-stepper/checkout-offer-step';
@@ -113,6 +115,12 @@ export function CheckoutScreen() {
 		},
 	});
 
+	const checkoutDraft = useCheckoutDraft({
+		form,
+		userId: user?.id ?? null,
+		enabled: Boolean(user),
+	});
+
 	useEffect(() => {
 		const currentUser = sessionQuery.data?.session?.user;
 
@@ -120,15 +128,19 @@ export function CheckoutScreen() {
 			return;
 		}
 
-		form.setValue('fullName', currentUser.name, {
-			shouldValidate: true,
-			shouldDirty: false,
-		});
+		if (!form.getValues('fullName')) {
+			form.setValue('fullName', currentUser.name, {
+				shouldValidate: true,
+				shouldDirty: false,
+			});
+		}
 
-		form.setValue('email', currentUser.email, {
-			shouldValidate: true,
-			shouldDirty: false,
-		});
+		if (!form.getValues('email')) {
+			form.setValue('email', currentUser.email, {
+				shouldValidate: true,
+				shouldDirty: false,
+			});
+		}
 	}, [sessionQuery.data?.session?.user, form]);
 
 	useEffect(() => {
@@ -292,6 +304,12 @@ export function CheckoutScreen() {
 
 						<div className="mt-10">
 							<CheckoutStepper steps={checkoutSteps} currentStepIndex={currentStepIndex} />
+
+							<CheckoutDraftStatus
+								hasDraft={checkoutDraft.hasDraft}
+								lastSavedAt={checkoutDraft.lastSavedAt}
+								onClear={checkoutDraft.clearDraft}
+							/>
 						</div>
 
 						<form onSubmit={form.handleSubmit(handleSubmit)} className="mt-8 grid gap-8" data-clarity-mask="true">

@@ -120,11 +120,11 @@ export function SiteHeader() {
 						</nav>
 					</SheetContent>
 				</Sheet>
-			</div>
 
-			<Suspense fallback={UserMenuFallback()}>
-				<UserMenu />
-			</Suspense>
+				<Suspense fallback={UserMenuFallback()}>
+					<UserMenu />
+				</Suspense>
+			</div>
 		</header>
 	);
 }

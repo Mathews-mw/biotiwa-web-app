@@ -28,7 +28,7 @@ export function ScienceSection() {
 			<div className="mx-auto grid max-w-7xl gap-16 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-24">
 				<FadeIn className="relative min-h-140 overflow-hidden rounded-[2.5rem] border border-white/10">
 					<Image
-						src="/images/science/laboratory.webp"
+						src="https://images.unsplash.com/photo-1664956618021-73c47736845e?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
 						alt="Ambiente de laboratório"
 						fill
 						sizes="(max-width: 1024px) 90vw, 48vw"
@@ -38,7 +38,7 @@ export function ScienceSection() {
 					<div className="absolute inset-0 bg-linear-to-t from-[#0d0710] via-[#0d0710]/20 to-transparent" />
 
 					<div className="absolute inset-x-8 bottom-8 rounded-3xl border border-white/10 bg-black/20 p-6 backdrop-blur-xl sm:inset-x-10 sm:bottom-10">
-						<p className="text-xs tracking-[0.25em] text-[#d7b56d] uppercase">Transparência</p>
+						<p className="text-brand-gold text-xs tracking-[0.25em] uppercase">Transparência</p>
 
 						<p className="mt-3 max-w-lg text-lg leading-8 text-white/75">
 							Toda informação técnica deverá ter origem documentada e aprovação do responsável pelo produto.
@@ -48,7 +48,7 @@ export function ScienceSection() {
 
 				<div>
 					<FadeIn>
-						<p className="text-xs font-medium tracking-[0.3em] text-[#d7b56d] uppercase">Ciência e confiança</p>
+						<p className="text-brand-gold text-xs font-medium tracking-[0.3em] uppercase">Ciência e confiança</p>
 
 						<h2 className="mt-6 max-w-xl text-5xl leading-[0.98] font-medium tracking-[-0.055em] text-balance sm:text-6xl">
 							Informação também faz parte do produto.
@@ -67,7 +67,7 @@ export function ScienceSection() {
 							return (
 								<FadeIn key={item.title} delay={index * 0.08} className="grid grid-cols-[auto_1fr] gap-5 py-7">
 									<div className="flex size-11 items-center justify-center rounded-full bg-white/5">
-										<Icon className="size-5 text-[#c57cdf]" />
+										<Icon className="text-brand-violet size-5" />
 									</div>
 
 									<div>

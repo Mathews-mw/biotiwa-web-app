@@ -46,14 +46,14 @@ export function ProductStorySection() {
 		<section ref={sectionRef} id="origem" className="relative bg-[#0d0710] text-white lg:min-h-[400svh]">
 			<motion.div
 				style={{ scaleX: scrollYProgress }}
-				className="fixed inset-x-0 top-0 z-60 h-0.5 origin-left bg-linear-to-r from-[#d7b56d] to-[#a855c7]"
+				className="from-brand-gold to-brand-acai fixed inset-x-0 top-0 z-60 h-0.5 origin-left bg-linear-to-r"
 			/>
 
 			<div className="mx-auto max-w-7xl px-6 py-28 lg:grid lg:grid-cols-[0.9fr_1.1fr] lg:gap-20 lg:px-10 lg:py-0">
 				<div className="lg:py-[35svh]">
 					<div className="mb-20 lg:hidden">
 						<div className="relative mx-auto aspect-4/5 max-w-sm">
-							<div className="absolute inset-[15%] rounded-full bg-[#8f3cab]/25 blur-[80px]" />
+							<div className="bg-brand-violet/25 absolute inset-[15%] rounded-full blur-[80px]" />
 
 							<Image
 								src="/images/product/acaipulse-bottle.png"
@@ -74,9 +74,9 @@ export function ProductStorySection() {
 									className={cn('max-w-xl transition-opacity duration-500', isActive ? 'opacity-100' : 'lg:opacity-35')}
 								>
 									<div className="flex items-center gap-4">
-										<span className="text-sm font-medium text-[#d7b56d]">{step.index}</span>
+										<span className="text-brand-gold text-sm font-medium">{step.index}</span>
 
-										<span className="h-px w-12 bg-[#d7b56d]/50" />
+										<span className="bg-brand-gold/50 h-px w-12" />
 
 										<span className="text-xs tracking-[0.26em] text-white/50 uppercase">{step.eyebrow}</span>
 									</div>
@@ -106,13 +106,13 @@ export function ProductStorySection() {
 									rotate: productRotate,
 									scale: productScale,
 								}}
-								className="relative z-10 aspect-4/5 h-[68%]"
+								className="relative z-10 aspect-4/5 h-[100%]"
 							>
 								<Image
-									src="/images/product/acaipulse-bottle.png"
+									src="/images/science/capsule_composition_nobg.png"
 									alt="Embalagem do Açaípulse"
 									fill
-									sizes="45vw"
+									sizes="(max-width: 1024px) 120vw, 60vw"
 									className="object-contain drop-shadow-[0_40px_40px_rgba(0,0,0,0.45)]"
 								/>
 							</motion.div>

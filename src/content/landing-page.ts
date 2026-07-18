@@ -16,6 +16,10 @@ export const navigationItems = [
 		href: '#ciencia',
 	},
 	{
+		label: 'Oferta',
+		href: '#oferta',
+	},
+	{
 		label: 'FAQ',
 		href: '#faq',
 	},
@@ -53,22 +57,22 @@ export const ingredientItems = [
 	{
 		name: 'Açaí',
 		label: 'Origem amazônica',
-		description: 'Apresente aqui as informações oficiais fornecidas pelo cliente sobre o açaí utilizado no produto.',
-		image: '/images/ingredients/acai.webp',
+		description: 'Informações oficiais sobre o açaí utilizado no produto.',
+		image: '/images/ingredients/acai.jpg',
 		glow: 'rgba(155, 65, 190, 0.36)',
 	},
 	{
 		name: 'Ingrediente 02',
 		label: 'Composição',
-		description: 'Substitua este conteúdo pelo segundo ingrediente e pelas informações aprovadas pelo laboratório.',
-		image: '/images/ingredients/ingredient-02.webp',
+		description: 'Substituir este conteúdo pelo segundo ingrediente e pelas informações aprovadas e revisadas.',
+		image: '/images/ingredients/ingredient1.jpg',
 		glow: 'rgba(219, 181, 109, 0.26)',
 	},
 	{
 		name: 'Ingrediente 03',
 		label: 'Formulação',
 		description: 'Este espaço poderá explicar de maneira objetiva a participação do ingrediente na composição.',
-		image: '/images/ingredients/ingredient-03.webp',
+		image: '/images/ingredients/ingredient2.jpg',
 		glow: 'rgba(89, 155, 115, 0.28)',
 	},
 ] as const;
