@@ -1,9 +1,10 @@
 import ky, { isHTTPError } from 'ky';
 
 import { ApiExceptionsError } from './api-exceptions-error';
+import { env } from '@/env';
 
 export const clientApi = ky.create({
-	prefix: 'http://localhost:3000/api/bff',
+	prefix: `${env.NEXT_PUBLIC_APP_BASE_URL}/api/bff`,
 	credentials: 'include',
 	timeout: 1000 * 30, // 30 seconds
 	hooks: {
