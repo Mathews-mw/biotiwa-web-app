@@ -3,7 +3,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
-import { useSessionQuery } from '../hooks/use-auth-queries';
+import { useAuthSession } from '../hooks/use-auth-session';
 
 import { AuthGuardState } from './auth-guard-state';
 
@@ -16,27 +16,27 @@ export function AuthGuard({ children }: AuthGuardProps) {
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 
-	const sessionQuery = useSessionQuery();
+	const { status } = useAuthSession();
 
 	const currentPath = searchParams.toString() ? `${pathname}?${searchParams.toString()}` : pathname;
 
 	useEffect(() => {
-		if (sessionQuery.isLoading) {
+		if (status === 'loading') {
 			return;
 		}
 
-		if (!sessionQuery.data?.session) {
+		if (status === 'unauthenticated') {
 			router.replace(`/login?next=${encodeURIComponent(currentPath)}`);
 		}
-	}, [sessionQuery.isLoading, sessionQuery.data?.session, router, currentPath]);
+	}, [status, router, currentPath]);
 
-	if (sessionQuery.isLoading) {
+	if (status === 'loading') {
 		return (
 			<AuthGuardState title="Verificando sua sessão" description="Estamos confirmando se você já está autenticado." />
 		);
 	}
 
-	if (!sessionQuery.data?.session) {
+	if (status === 'unauthenticated') {
 		return (
 			<AuthGuardState
 				title="Redirecionando para login"

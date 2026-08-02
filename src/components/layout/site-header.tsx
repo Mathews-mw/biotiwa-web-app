@@ -5,12 +5,13 @@ import { useMotionValueEvent, useScroll } from 'motion/react';
 
 import { cn } from '@/lib/utils';
 
-import { buttonVariants } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { navigationItems } from '@/content/landing-page';
 import { UserMenu, UserMenuFallback } from '@/features/account/components/user-menu';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 import { Menu } from 'lucide-react';
+import { GetUserProfile } from './get-user-profile';
 
 export function SiteHeader() {
 	const [isMenuOpen, setIsMenuOpen] = useState(false);

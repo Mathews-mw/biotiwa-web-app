@@ -2,50 +2,79 @@ export type IMarketCode = 'BR' | 'US';
 
 export type ICurrencyCode = 'BRL' | 'USD';
 
-export type IMarket = {
+export type IProductStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
+
+export type IOfferStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
+
+export interface IMarket {
+	id: string;
 	code: IMarketCode;
 	label: string;
 	locale: string;
 	currency: ICurrencyCode;
-	shippingAmount: number;
-	taxRate: number;
-};
+	shipping_amount: number;
+	tax_rate: number;
+	is_active: boolean;
+	created_at: Date | string;
+	updated_at?: Date | string | null;
+}
 
-export type IProduct = {
+export interface IProduct {
 	id: string;
 	sku: string;
 	slug: string;
 	name: string;
-	shortDescription: string;
-	imageUrl: string;
-	pillsPerPack: number;
-};
+	short_description: string;
+	description?: string | null;
+	image_url?: string | null;
+	pills_per_pack: number;
+	status: IProductStatus;
+	created_at: Date | string;
+	updated_at?: Date | string | null;
+}
 
-export type IOffer = {
+export interface IOffer {
 	id: string;
-	market: IMarketCode;
+	slug: string;
+	market_code: IMarketCode;
 	name: string;
 	description: string;
-	quantity: number;
-	unitAmount: number;
-	discountPercent: number;
-	isHighlighted?: boolean;
-};
+	unit_amount: number;
+	discount_percent: number;
+	is_highlighted: boolean;
+	status: IOfferStatus;
+	sort_order: number;
+	created_at: Date | string;
+	updated_at?: Date | string | null;
+	items: IOfferItem[];
+}
 
-export type IOrderBump = {
+export interface IOfferItem {
 	id: string;
-	market: IMarketCode;
+	offer_id: string;
+	product_id: string;
+	quantity: number;
+	created_at: Date | string;
+}
+export interface IOrderBump {
+	id: string;
+	product_id: string;
+	market_code: IMarketCode;
 	name: string;
 	description: string;
-	unitAmount: number;
+	unit_amount: number;
 	quantity: number;
-};
+	is_active: boolean;
+	sort_order: number;
+	created_at: Date | string;
+	updated_at?: Date | string | null;
+}
 
-export type IOrderSummary = {
+export interface IOrderSummary {
 	subtotalAmount: number;
 	discountAmount: number;
 	shippingAmount: number;
 	taxAmount: number;
 	totalAmount: number;
 	currency: ICurrencyCode;
-};
+}

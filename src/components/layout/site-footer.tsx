@@ -5,7 +5,7 @@ export function SiteFooter() {
 	const currentYear = new Date().getFullYear();
 
 	return (
-		<footer className="border-t border-white/10 bg-[#09050b] px-6 py-12 text-white lg:px-10">
+		<footer className="bg-valentino border-t border-white/10 px-6 py-12 text-white lg:px-10 dark:bg-[#09050b]">
 			<div className="mx-auto flex max-w-7xl flex-col gap-10">
 				<div className="flex flex-col justify-between gap-10 md:flex-row md:items-start">
 					<div>

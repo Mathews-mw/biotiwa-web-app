@@ -20,6 +20,7 @@ export type ICheckoutQuoteInput = {
 
 export type ICheckoutQuoteResponse = {
 	market: IMarket;
+	product: IProduct;
 	offer: IOffer;
 	orderBump: IOrderBump | null;
 	summary: IOrderSummary;

@@ -12,6 +12,7 @@ import { formatMoney } from '@/features/commerce/lib/format-money';
 import { useTrackEvent } from '@/features/tracking/hooks/use-track-event';
 import { useSaveCartSelectionMutation } from '@/features/cart/hooks/use-cart-queries';
 import { usePublicOffersQuery } from '@/features/commerce/hooks/use-commerce-queries';
+import { getOfferTotalQuantity } from '@/features/commerce/lib/get-offer-total-quantity';
 
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -44,9 +45,14 @@ export function CheckoutOfferEditor({
 
 	const market = offersQuery.data?.market;
 	const offers = offersQuery.data?.offers ?? [];
-	const orderBump = offersQuery.data?.orderBump ?? null;
+	const orderBump = offersQuery.data?.order_bump ?? null;
 
-	const selectedOffer = offers.find((offer) => offer.id === selectedOfferId) ?? null;
+	const selectedOffer =
+		offers.find((offer) => offer.id === selectedOfferId) ??
+		offers.find((offer) => offer.slug === selectedOfferId) ??
+		null;
+
+	const selectedOfferQuantity = selectedOffer ? getOfferTotalQuantity(selectedOffer) : 0;
 
 	async function applySelection(input: { offerId: string; includeOrderBump: boolean }) {
 		if (!market) {
@@ -70,6 +76,7 @@ export function CheckoutOfferEditor({
 
 		if (input.offerId !== selectedOfferId) {
 			const nextOffer = offers.find((offer) => offer.id === input.offerId);
+			const nextOfferQuantity = nextOffer ? getOfferTotalQuantity(nextOffer) : 0;
 
 			track({
 				eventType: 'offer_selected',
@@ -78,8 +85,8 @@ export function CheckoutOfferEditor({
 					source: 'checkout',
 					offerId: input.offerId,
 					offerName: nextOffer?.name,
-					quantity: nextOffer?.quantity,
-					discountPercent: nextOffer?.discountPercent,
+					quantity: nextOfferQuantity,
+					discountPercent: nextOffer?.discount_percent,
 				},
 			});
 		}
@@ -118,8 +125,8 @@ export function CheckoutOfferEditor({
 		);
 	}
 
-	const originalAmount = selectedOffer.unitAmount * selectedOffer.quantity;
-	const discountAmount = Math.round(originalAmount * (selectedOffer.discountPercent / 100));
+	const originalAmount = selectedOffer.unit_amount * selectedOfferQuantity;
+	const discountAmount = Math.round(originalAmount * (selectedOffer.discount_percent / 100));
 	const finalAmount = originalAmount - discountAmount;
 
 	return (
@@ -141,7 +148,7 @@ export function CheckoutOfferEditor({
 							})}
 						</span>
 
-						{selectedOffer.discountPercent > 0 ? (
+						{selectedOffer.discount_percent > 0 ? (
 							<>
 								<span className="pb-1 text-sm text-white/35 line-through">
 									{formatMoney({
@@ -151,7 +158,7 @@ export function CheckoutOfferEditor({
 									})}
 								</span>
 
-								<span className="text-brand-gold pb-1 text-sm font-medium">{selectedOffer.discountPercent}% OFF</span>
+								<span className="text-brand-gold pb-1 text-sm font-medium">{selectedOffer.discount_percent}% OFF</span>
 							</>
 						) : null}
 					</div>
@@ -189,8 +196,10 @@ export function CheckoutOfferEditor({
 							{offers.map((offer) => {
 								const isSelected = offer.id === selectedOfferId;
 
-								const offerOriginalAmount = offer.unitAmount * offer.quantity;
-								const offerDiscountAmount = Math.round(offerOriginalAmount * (offer.discountPercent / 100));
+								const offerQuantity = getOfferTotalQuantity(offer);
+
+								const offerOriginalAmount = offer.unit_amount * offerQuantity;
+								const offerDiscountAmount = Math.round(offerOriginalAmount * (offer.discount_percent / 100));
 								const offerFinalAmount = offerOriginalAmount - offerDiscountAmount;
 
 								return (
@@ -274,7 +283,7 @@ export function CheckoutOfferEditor({
 										<span className="text-brand-gold mt-3 block font-semibold">
 											+
 											{formatMoney({
-												amount: orderBump.unitAmount,
+												amount: orderBump.unit_amount,
 												currency: market.currency,
 												locale: market.locale,
 											})}

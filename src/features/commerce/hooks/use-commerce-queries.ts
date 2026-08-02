@@ -1,30 +1,31 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 
-import type { ICheckoutQuoteInput, ICreateCheckoutSessionInput, IGetOffersParams } from '../api/commerce-api-types';
+import { commerceQueryKeys } from '../query-keys/commerce-query-keys';
+import { createCheckoutSession, getCheckoutQuote } from '../api/commerce-api';
+import { getPublicOffersRequest } from '../http-requests/get-public-offers.request';
 
-import { commerceQueryKeys } from '../api/commerce-query-keys';
-import { createCheckoutSession, getCheckoutQuote, getPublicOffers } from '../api/commerce-api';
+import type { ICheckoutQuoteInput, ICreateCheckoutSessionInput, IGetOffersParams } from '../api/commerce-api-types';
 
 export function usePublicOffersQuery(params: IGetOffersParams) {
 	return useQuery({
 		queryKey: commerceQueryKeys.offers(params),
-		queryFn: () => getPublicOffers(params),
+		queryFn: () => getPublicOffersRequest(params),
 		staleTime: 1000 * 60 * 5,
 	});
 }
 
 export function useCheckoutQuoteQuery(input: ICheckoutQuoteInput | null) {
 	return useQuery({
-		queryKey: input ? commerceQueryKeys.quote(input) : [...commerceQueryKeys.all, 'checkout-quote', 'empty'],
+		queryKey: input ? commerceQueryKeys.quote(input) : commerceQueryKeys.quoteEmpty(),
 		queryFn: () => {
 			if (!input) {
-				throw new Error('Dados insuficientes para calcular o pedido.');
+				throw new Error('Quote input is required.');
 			}
 
 			return getCheckoutQuote(input);
 		},
 		enabled: Boolean(input),
-		staleTime: 1000 * 15,
+		staleTime: 1000 * 30,
 	});
 }
 

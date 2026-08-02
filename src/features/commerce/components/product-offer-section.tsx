@@ -19,6 +19,7 @@ import { SummaryRow } from './summary-row';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { getOfferTotalQuantity } from '../lib/get-offer-total-quantity';
 
 const availableMarkets = [
 	{
@@ -51,7 +52,7 @@ export function ProductOfferSection() {
 
 	const currentMarket = offersQuery.data?.market;
 	const product = offersQuery.data?.product;
-	const currentOrderBump = offersQuery.data?.orderBump ?? null;
+	const currentOrderBump = offersQuery.data?.order_bump ?? null;
 	const marketOffers = useMemo(() => {
 		return offersQuery.data?.offers ?? [];
 	}, [offersQuery.data?.offers]);
@@ -69,7 +70,7 @@ export function ProductOfferSection() {
 			return;
 		}
 
-		const defaultOffer = offersQuery.data.offers.find((offer) => offer.isHighlighted) ?? offersQuery.data.offers[0];
+		const defaultOffer = offersQuery.data.offers.find((offer) => offer.is_highlighted) ?? offersQuery.data.offers[0];
 
 		// Defer setting state to avoid synchronous setState inside effect which can
 		// trigger cascading renders (lint: react-hooks/set-state-in-effect).
@@ -161,6 +162,34 @@ export function ProductOfferSection() {
 		});
 	}, [offersQuery.data, selectedMarketCode]);
 
+	useEffect(() => {
+		if (marketOffers.length === 0) {
+			return;
+		}
+
+		const currentOfferStillExists = marketOffers.some((offer) => {
+			return offer.id === selectedOfferId;
+		});
+
+		if (currentOfferStillExists) {
+			return;
+		}
+
+		const highlightedOffer = marketOffers.find((offer) => {
+			return offer.is_highlighted;
+		});
+
+		const nextOfferId = highlightedOffer?.id ?? marketOffers[0].id;
+
+		const timeoutId = setTimeout(() => {
+			setSelectedOfferId(nextOfferId);
+		}, 0);
+
+		return () => {
+			clearTimeout(timeoutId);
+		};
+	}, [marketOffers, selectedOfferId]);
+
 	if (offersQuery.isLoading) {
 		return (
 			<section className="bg-[#100813] px-6 py-28 text-white lg:px-10 lg:py-40">
@@ -211,7 +240,7 @@ export function ProductOfferSection() {
 						<div className="bg-brand-violet/25 absolute inset-[12%] rounded-full blur-[90px]" />
 
 						<Image
-							src={product.imageUrl}
+							src={product.image_url ?? ''}
 							alt={product.name}
 							fill
 							sizes="(max-width: 1024px) 80vw, 35vw"
@@ -264,9 +293,10 @@ export function ProductOfferSection() {
 							{marketOffers.map((offer) => {
 								const isSelected = selectedOffer?.id === offer.id;
 
-								const originalAmount = offer.unitAmount * offer.quantity;
+								const totalOfferQuantity = getOfferTotalQuantity(offer);
+								const originalAmount = offer.unit_amount * totalOfferQuantity;
 
-								const finalAmount = originalAmount - Math.round(originalAmount * (offer.discountPercent / 100));
+								const finalAmount = originalAmount - Math.round(originalAmount * (offer.discount_percent / 100));
 
 								return (
 									<button
@@ -281,8 +311,8 @@ export function ProductOfferSection() {
 												payload: {
 													offerId: offer.id,
 													offerName: offer.name,
-													quantity: offer.quantity,
-													discountPercent: offer.discountPercent,
+													quantity: totalOfferQuantity,
+													discountPercent: offer.discount_percent,
 												},
 											});
 										}}
@@ -291,7 +321,7 @@ export function ProductOfferSection() {
 											isSelected ? 'border-brand-gold bg-white/8' : 'border-white/10 bg-white/2.5 hover:border-white/25'
 										)}
 									>
-										{offer.isHighlighted ? (
+										{offer.is_highlighted ? (
 											<span className="bg-brand-gold absolute top-4 right-4 rounded-full px-3 py-1 text-xs font-medium text-[#16091f]">
 												Mais escolhido
 											</span>
@@ -310,7 +340,7 @@ export function ProductOfferSection() {
 												})}
 											</span>
 
-											{offer.discountPercent > 0 ? (
+											{offer.discount_percent > 0 ? (
 												<>
 													<span className="pb-1 text-sm text-white/35 line-through">
 														{formatMoney({
@@ -320,7 +350,9 @@ export function ProductOfferSection() {
 														})}
 													</span>
 
-													<span className="text-brand-gold pb-1 text-sm font-medium">{offer.discountPercent}% OFF</span>
+													<span className="text-brand-gold pb-1 text-sm font-medium">
+														{offer.discount_percent}% OFF
+													</span>
 												</>
 											) : null}
 										</div>
@@ -379,7 +411,7 @@ export function ProductOfferSection() {
 									<span className="mt-4 block text-xl font-semibold">
 										+
 										{formatMoney({
-											amount: currentOrderBump.unitAmount,
+											amount: currentOrderBump.unit_amount,
 											currency,
 											locale,
 										})}

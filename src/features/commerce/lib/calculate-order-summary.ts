@@ -1,4 +1,6 @@
-import type { IMarket, IOffer, IOrderBump, IOrderSummary } from '../commerce/types/commerce';
+import { getOfferTotalQuantity } from './get-offer-total-quantity';
+
+import type { IMarket, IOffer, IOrderBump, IOrderSummary } from '../types/commerce';
 
 type ICalculateOrderSummaryParams = {
 	market: IMarket;
@@ -7,24 +9,25 @@ type ICalculateOrderSummaryParams = {
 };
 
 export function calculateOrderSummary({ market, offer, orderBump }: ICalculateOrderSummaryParams): IOrderSummary {
-	const offerSubtotal = offer.unitAmount * offer.quantity;
+	const offerQuantity = getOfferTotalQuantity(offer);
+	const offerSubtotalAmount = offer.unit_amount * offerQuantity;
 
-	const bumpSubtotal = orderBump ? orderBump.unitAmount * orderBump.quantity : 0;
+	const discountAmount = Math.round(offerSubtotalAmount * (offer.discount_percent / 100));
 
-	const subtotalAmount = offerSubtotal + bumpSubtotal;
+	const orderBumpAmount = orderBump ? orderBump.unit_amount * orderBump.quantity : 0;
 
-	const discountAmount = Math.round(offerSubtotal * (offer.discountPercent / 100));
+	const subtotalAmount = offerSubtotalAmount + orderBumpAmount;
 
-	const taxableAmount = Math.max(subtotalAmount - discountAmount, 0);
+	const taxableAmount = subtotalAmount - discountAmount;
 
-	const taxAmount = Math.round(taxableAmount * market.taxRate);
+	const taxAmount = Math.round(taxableAmount * market.tax_rate);
 
-	const totalAmount = subtotalAmount - discountAmount + market.shippingAmount + taxAmount;
+	const totalAmount = taxableAmount + market.shipping_amount + taxAmount;
 
 	return {
 		subtotalAmount,
 		discountAmount,
-		shippingAmount: market.shippingAmount,
+		shippingAmount: market.shipping_amount,
 		taxAmount,
 		totalAmount,
 		currency: market.currency,

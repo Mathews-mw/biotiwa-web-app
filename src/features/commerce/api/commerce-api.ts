@@ -1,75 +1,43 @@
 import { calculateOrderSummary } from '../lib/calculate-order-summary';
-import { markets, offers, orderBumps, product } from '../data/mock-catalog';
+import { getPublicOffersRequest } from '../http-requests/get-public-offers.request';
 
 import type {
 	ICheckoutQuoteInput,
 	ICheckoutQuoteResponse,
 	ICreateCheckoutSessionInput,
 	ICreateCheckoutSessionResponse,
-	IGetOffersParams,
-	IGetOffersResponse,
 } from './commerce-api-types';
 
 function sleep(ms: number) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function getPublicOffers({ market }: IGetOffersParams): Promise<IGetOffersResponse> {
-	await sleep(350);
-
-	const selectedMarket = markets.find((item) => item.code === market);
-
-	if (!selectedMarket) {
-		throw new Error('Mercado não encontrado.');
-	}
-
-	const marketOffers = offers.filter((offer) => offer.market === market);
-
-	const marketOrderBump = orderBumps.find((orderBump) => orderBump.market === market) ?? null;
-
-	return {
-		market: selectedMarket,
-		product,
-		offers: marketOffers,
-		orderBump: marketOrderBump,
-	};
-}
-
 export async function getCheckoutQuote(input: ICheckoutQuoteInput): Promise<ICheckoutQuoteResponse> {
-	await sleep(250);
-
-	const selectedMarket = markets.find((market) => {
-		return market.code === input.market;
+	const publicOffers = await getPublicOffersRequest({
+		market: input.market,
 	});
 
-	if (!selectedMarket) {
-		throw new Error('Mercado não encontrado.');
-	}
-
-	const selectedOffer = offers.find((offer) => {
-		return offer.id === input.offerId && offer.market === input.market;
+	const offer = publicOffers.offers.find((item) => {
+		return item.id === input.offerId || item.slug === input.offerId;
 	});
 
-	if (!selectedOffer) {
-		throw new Error('Oferta não encontrada.');
+	if (!offer) {
+		throw new Error('Selected offer was not found.');
 	}
 
-	const selectedOrderBump = input.includeOrderBump
-		? (orderBumps.find((orderBump) => {
-				return orderBump.market === input.market;
-			}) ?? null)
-		: null;
+	const orderBump = input.includeOrderBump && publicOffers.order_bump ? publicOffers.order_bump : null;
 
 	const summary = calculateOrderSummary({
-		market: selectedMarket,
-		offer: selectedOffer,
-		orderBump: selectedOrderBump,
+		market: publicOffers.market,
+		offer,
+		orderBump,
 	});
 
 	return {
-		market: selectedMarket,
-		offer: selectedOffer,
-		orderBump: selectedOrderBump,
+		market: publicOffers.market,
+		product: publicOffers.product,
+		offer,
+		orderBump,
 		summary,
 	};
 }

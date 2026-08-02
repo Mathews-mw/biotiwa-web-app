@@ -1,5 +1,6 @@
 import './globals.css';
 
+import { Toaster } from 'sonner';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono, Inter } from 'next/font/google';
 
@@ -7,8 +8,8 @@ import { cn } from '@/lib/utils';
 
 import { QueryProvider } from '@/providers/query-provider';
 import { ConsentProvider } from '@/features/consent/context/consent-provider';
-import { AuthSessionSync } from '@/features/auth/components/auth-session-sync';
 import { CartSessionSync } from '@/features/cart/components/cart-session-sync';
+import { AuthSessionProvider } from '@/features/auth/context/auth-session-provider';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -39,11 +40,14 @@ export default function RootLayout({
 		>
 			<body className="flex min-h-full flex-col">
 				<QueryProvider>
-					<AuthSessionSync />
-					<CartSessionSync />
+					<AuthSessionProvider>
+						<CartSessionSync />
 
-					<ConsentProvider>{children}</ConsentProvider>
+						<ConsentProvider>{children}</ConsentProvider>
+					</AuthSessionProvider>
 				</QueryProvider>
+
+				<Toaster richColors />
 			</body>
 		</html>
 	);
