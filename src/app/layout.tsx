@@ -42,7 +42,8 @@ export default function RootLayout({
 				<QueryProvider>
 					<AuthSessionProvider>
 						<CartSessionSync />
-						<ConsentProvider>{children}</ConsentProvider>
+						{/* <ConsentProvider>{children}</ConsentProvider> */}
+						{children}
 					</AuthSessionProvider>
 				</QueryProvider>
 

@@ -34,7 +34,7 @@ export function SiteFooter() {
 
 					<p>Biotiwa · Amazon Labs</p>
 
-					<ConsentSettingsButton />
+					{/* <ConsentSettingsButton /> */}
 				</div>
 			</div>
 		</footer>
