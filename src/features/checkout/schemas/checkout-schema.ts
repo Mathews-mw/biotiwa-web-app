@@ -5,14 +5,10 @@ export const checkoutSchema = z
 		market: z.enum(['BR', 'US']),
 		fullName: z.string().min(3, 'Informe seu nome completo.').max(120, 'Nome muito longo.'),
 		email: z.string().min(1, 'Informe seu e-mail.').email('Informe um e-mail válido.'),
-		age: z.coerce
-			.number({
-				message: 'Informe sua idade.',
-			})
-			.int('Informe uma idade válida.')
-			.min(18, 'É necessário ter pelo menos 18 anos.')
-			.max(120, 'Informe uma idade válida.'),
-		sportPractice: z.string().min(2, 'Informe se pratica algum esporte.').max(80, 'Texto muito longo.'),
+		phone: z.string().length(15).optional(),
+		birthDate: z.string().refine((value) => /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/([0-9]{4})$/.test(value), {
+			message: 'Por favor, preencha uma data válida',
+		}),
 		postalCode: z.string().min(5, 'Informe o CEP/ZIP code.').max(12, 'CEP/ZIP code inválido.'),
 		addressLine1: z.string().min(3, 'Informe o endereço.').max(160, 'Endereço muito longo.'),
 		number: z.string().max(20, 'Número muito longo.').optional(),

@@ -1,4 +1,4 @@
-import type { IMarketCode } from '@/features/commerce/types/commerce';
+import type { IMarketCode } from '@/features/commerce/types/commerce-entity-types';
 
 type BuildCheckoutPathParams = {
 	market: IMarketCode;

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { getUserInitials } from '../lib/get-user-initials';
+import { useGetActiveCartQuery } from '@/features/cart/hooks/use-cart-queries';
 import { useAuthSession } from '@/features/auth/hooks/use-auth-session';
 import { useLogoutMutation } from '@/features/auth/hooks/use-auth-queries';
 
@@ -19,6 +20,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import { Loader2, LogOut, ShoppingBag, UserRound } from 'lucide-react';
+import { useMemo } from 'react';
 
 export function UserMenu() {
 	const router = useRouter();
@@ -31,6 +33,24 @@ export function UserMenu() {
 	const currentPath = searchParams.toString() ? `${pathname}?${searchParams.toString()}` : pathname;
 
 	const loginHref = `/login?next=${encodeURIComponent(currentPath)}`;
+
+	const { data: activeCartData } = useGetActiveCartQuery({
+		enabled: Boolean(user),
+	});
+
+	const cartItemsCount = useMemo(() => {
+		const hasActiveCart = !!activeCartData && activeCartData.cart !== null;
+
+		if (!hasActiveCart) {
+			return 0;
+		}
+
+		const cartItems = activeCartData.cart.items;
+
+		return cartItems.reduce((total, item) => {
+			return total + item.quantity;
+		}, 0);
+	}, [activeCartData]);
 
 	async function handleLogout() {
 		await logoutMutation.mutateAsync();
@@ -80,6 +100,11 @@ export function UserMenu() {
 					<Link href="/checkout">
 						<ShoppingBag className="size-4" />
 						Carrinho
+						{cartItemsCount > 0 && (
+							<span className="bg-brand-gold ml-auto rounded-full px-2 py-0.5 text-xs text-[#16091f]">
+								{cartItemsCount}
+							</span>
+						)}
 					</Link>
 				</DropdownMenuItem>
 

@@ -22,7 +22,7 @@ export function CheckoutSummary({ locale, currency, selection }: CheckoutSummary
 		<Card className="border-white/10 bg-white/4 p-6 text-white shadow-2xl shadow-black/20">
 			<div className="flex gap-4">
 				<div className="relative size-20 shrink-0 overflow-hidden rounded-2xl bg-white/5">
-					<Image src={product.imageUrl} alt={product.name} fill sizes="80px" className="object-contain p-2" />
+					<Image src={product.image_url ?? ''} alt={product.name} fill sizes="80px" className="object-contain p-2" />
 				</div>
 
 				<div>
@@ -79,7 +79,7 @@ export function CheckoutSummary({ locale, currency, selection }: CheckoutSummary
 					<SummaryRow
 						label="Oferta adicional"
 						value={formatMoney({
-							amount: selection.orderBump.unitAmount * selection.orderBump.quantity,
+							amount: selection.orderBump.unit_amount * selection.orderBump.quantity,
 							currency,
 							locale,
 						})}

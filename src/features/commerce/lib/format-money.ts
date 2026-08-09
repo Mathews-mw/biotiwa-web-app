@@ -1,4 +1,4 @@
-import type { ICurrencyCode } from '../commerce/types/commerce';
+import { ICurrencyCode } from '../types/commerce-entity-types';
 
 type IFormatMoneyParams = {
 	amount: number;
@@ -6,7 +6,7 @@ type IFormatMoneyParams = {
 	locale: string;
 };
 
-export function formatMoney({ amount, currency, locale }: IFormatMoneyParams) {
+export function formatMoney({ amount, currency = 'BRL', locale = 'pt-BR' }: IFormatMoneyParams) {
 	return new Intl.NumberFormat(locale, {
 		style: 'currency',
 		currency,

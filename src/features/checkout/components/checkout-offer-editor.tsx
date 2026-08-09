@@ -1,47 +1,54 @@
 'use client';
 
+import { toast } from 'sonner';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, PencilLine } from 'lucide-react';
 
-import type { IMarketCode } from '@/features/commerce/types/commerce';
+import type { IMarketCode } from '@/features/commerce/types/commerce-entity-types';
 
 import { cn } from '@/lib/utils';
 import { buildCheckoutPath } from '../lib/build-checkout-path';
 import { formatMoney } from '@/features/commerce/lib/format-money';
+import { useAuthSession } from '@/features/auth/hooks/use-auth-session';
 import { useTrackEvent } from '@/features/tracking/hooks/use-track-event';
-import { useSaveCartSelectionMutation } from '@/features/cart/hooks/use-cart-queries';
-import { usePublicOffersQuery } from '@/features/commerce/hooks/use-commerce-queries';
+import { useGetPublicOffersQuery } from '@/features/commerce/hooks/use-commerce-queries';
 import { getOfferTotalQuantity } from '@/features/commerce/lib/get-offer-total-quantity';
+import {
+	useAddCartItemMutation,
+	useGetActiveCartQuery,
+	useRemoveCartItemMutation,
+} from '@/features/cart/hooks/use-cart-queries';
 
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { ClearCartDialog } from './clear-cart-dialog';
+
+import { Check } from 'lucide-react';
+import { IconPencilCog } from '@tabler/icons-react';
 
 type CheckoutOfferEditorProps = {
 	marketCode: IMarketCode;
 	selectedOfferId: string;
 	includeOrderBump: boolean;
-	userId: string | null;
 };
 
-export function CheckoutOfferEditor({
-	marketCode,
-	selectedOfferId,
-	includeOrderBump,
-	userId,
-}: CheckoutOfferEditorProps) {
+export function CheckoutOfferEditor({ marketCode, selectedOfferId, includeOrderBump }: CheckoutOfferEditorProps) {
 	const router = useRouter();
 
 	const [isEditing, setIsEditing] = useState(false);
 
-	const offersQuery = usePublicOffersQuery({
+	const { track } = useTrackEvent();
+	const { isAuthenticated } = useAuthSession();
+
+	const offersQuery = useGetPublicOffersQuery({
 		market: marketCode,
 	});
 
-	const saveCartSelectionMutation = useSaveCartSelectionMutation();
-	const { track } = useTrackEvent();
+	const activeCartQuery = useGetActiveCartQuery({ enabled: isAuthenticated });
+
+	const cart = activeCartQuery.data?.cart ?? null;
 
 	const market = offersQuery.data?.market;
 	const offers = offersQuery.data?.offers ?? [];
@@ -54,8 +61,11 @@ export function CheckoutOfferEditor({
 
 	const selectedOfferQuantity = selectedOffer ? getOfferTotalQuantity(selectedOffer) : 0;
 
+	const addCartItemMutation = useAddCartItemMutation();
+	const removeCartItemMutation = useRemoveCartItemMutation();
+
 	async function applySelection(input: { offerId: string; includeOrderBump: boolean }) {
-		if (!market) {
+		if (!market || !cart) {
 			return;
 		}
 
@@ -65,48 +75,83 @@ export function CheckoutOfferEditor({
 			includeOrderBump: input.includeOrderBump,
 		});
 
-		if (userId) {
-			await saveCartSelectionMutation.mutateAsync({
-				userId,
-				market: marketCode,
-				offerId: input.offerId,
-				includeOrderBump: input.includeOrderBump,
-			});
-		}
+		try {
+			// Change offer
+			if (input.offerId !== selectedOfferId) {
+				const cartItemToBeRemoved = cart.items.find((item) => item.offer_id === selectedOfferId);
 
-		if (input.offerId !== selectedOfferId) {
-			const nextOffer = offers.find((offer) => offer.id === input.offerId);
-			const nextOfferQuantity = nextOffer ? getOfferTotalQuantity(nextOffer) : 0;
+				if (cartItemToBeRemoved) {
+					await removeCartItemMutation.mutateAsync({ cartItemId: cartItemToBeRemoved.id });
+				}
 
-			track({
-				eventType: 'offer_selected',
-				market: marketCode,
-				payload: {
-					source: 'checkout',
+				const nextOffer = offers.find((offer) => offer.id === input.offerId);
+				const nextOfferQuantity = nextOffer ? getOfferTotalQuantity(nextOffer) : 0;
+
+				track({
+					eventType: 'offer_selected',
+					market: marketCode,
+					payload: {
+						source: 'checkout',
+						offerId: input.offerId,
+						offerName: nextOffer?.name,
+						quantity: nextOfferQuantity,
+						discountPercent: nextOffer?.discount_percent,
+					},
+				});
+
+				await addCartItemMutation.mutateAsync({
+					marketCode,
+					type: 'OFFER',
 					offerId: input.offerId,
-					offerName: nextOffer?.name,
-					quantity: nextOfferQuantity,
-					discountPercent: nextOffer?.discount_percent,
-				},
-			});
-		}
+					quantity: 1,
+				});
+			}
 
-		if (input.includeOrderBump !== includeOrderBump && orderBump) {
-			track({
-				eventType: 'order_bump_changed',
-				market: marketCode,
-				payload: {
-					source: 'checkout',
-					orderBumpId: orderBump.id,
-					orderBumpName: orderBump.name,
-					included: input.includeOrderBump,
-				},
-			});
-		}
+			// Change order bump
+			if (input.includeOrderBump !== includeOrderBump && orderBump) {
+				track({
+					eventType: 'order_bump_changed',
+					market: marketCode,
+					payload: {
+						source: 'checkout',
+						orderBumpId: orderBump.id,
+						orderBumpName: orderBump.name,
+						included: input.includeOrderBump,
+					},
+				});
 
-		router.replace(nextPath, {
-			scroll: false,
-		});
+				// Remove order bump
+				if (includeOrderBump) {
+					const cartItemToBeRemoved = cart.items.find((item) => item.order_bump_id === orderBump.id);
+
+					if (cartItemToBeRemoved) {
+						await removeCartItemMutation.mutateAsync({ cartItemId: cartItemToBeRemoved.id });
+					}
+				}
+
+				// Add order bump
+				if (!includeOrderBump) {
+					await addCartItemMutation.mutateAsync({
+						marketCode,
+						type: 'ORDER_BUMP',
+						orderBumpId: orderBump.id,
+						quantity: 1,
+					});
+				}
+			}
+
+			toast.success('Itens atualizados');
+
+			router.replace(nextPath, {
+				scroll: false,
+			});
+		} catch (error) {
+			if (error instanceof Error) {
+				toast.error(error.message);
+			}
+
+			toast.error('Não foi possível atualizar seu carrinho. Tente novamente.');
+		}
 	}
 
 	if (offersQuery.isLoading) {
@@ -174,15 +219,19 @@ export function CheckoutOfferEditor({
 					)}
 				</div>
 
-				<Button
-					type="button"
-					variant="outline"
-					onClick={() => setIsEditing((current) => !current)}
-					className="rounded-full border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white"
-				>
-					<PencilLine className="size-4" />
-					{isEditing ? 'Fechar edição' : 'Alterar'}
-				</Button>
+				<div className="flex items-center gap-2">
+					<ClearCartDialog />
+
+					<Button
+						type="button"
+						variant="outline"
+						onClick={() => setIsEditing((current) => !current)}
+						className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white"
+					>
+						<IconPencilCog />
+						{isEditing ? 'Fechar edição' : 'Alterar'}
+					</Button>
+				</div>
 			</div>
 
 			{isEditing ? (
@@ -192,6 +241,7 @@ export function CheckoutOfferEditor({
 					<div>
 						<p className="text-sm font-medium text-white/60">Alterar plano</p>
 
+						{/* Offer options */}
 						<div className="mt-4 grid gap-3">
 							{offers.map((offer) => {
 								const isSelected = offer.id === selectedOfferId;
@@ -206,7 +256,7 @@ export function CheckoutOfferEditor({
 									<button
 										key={offer.id}
 										type="button"
-										disabled={saveCartSelectionMutation.isPending}
+										disabled={addCartItemMutation.isPending || removeCartItemMutation.isPending}
 										onClick={() => {
 											void applySelection({
 												offerId: offer.id,
@@ -243,6 +293,7 @@ export function CheckoutOfferEditor({
 						</div>
 					</div>
 
+					{/* Order Bump Option */}
 					{orderBump ? (
 						<>
 							<Separator className="my-6 bg-white/10" />
@@ -252,7 +303,7 @@ export function CheckoutOfferEditor({
 
 								<button
 									type="button"
-									disabled={saveCartSelectionMutation.isPending}
+									disabled={addCartItemMutation.isPending || removeCartItemMutation.isPending}
 									onClick={() => {
 										void applySelection({
 											offerId: selectedOfferId,
@@ -292,12 +343,6 @@ export function CheckoutOfferEditor({
 								</button>
 							</div>
 						</>
-					) : null}
-
-					{saveCartSelectionMutation.isError ? (
-						<p className="mt-5 rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-							Não foi possível atualizar o carrinho. Tente novamente.
-						</p>
 					) : null}
 				</>
 			) : null}

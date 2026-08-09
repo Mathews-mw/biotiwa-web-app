@@ -130,7 +130,7 @@ export function UserProfileForm({ user, profile }: IProps) {
 					render={({ field, fieldState }) => {
 						return (
 							<Field data-invalid={fieldState.invalid} className="space-y-2">
-								<Label htmlFor="phone">Telefone</Label>
+								<FieldLabel htmlFor="phone">Telefone</FieldLabel>
 								<PhoneInput
 									{...field}
 									id="phone"

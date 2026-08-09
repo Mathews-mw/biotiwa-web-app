@@ -17,8 +17,8 @@ declare global {
 	}
 }
 
-const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
-const clarityProjectId = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID;
+const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ?? undefined;
+const clarityProjectId = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID ?? undefined;
 
 export function AnalyticsScripts({ preferences }: AnalyticsScriptsProps) {
 	const analyticsAllowed = preferences?.analytics === true;

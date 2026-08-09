@@ -7,7 +7,7 @@ import type {
 	IGetCartResponse,
 	ISaveCartSelectionInput,
 	ISaveCartSelectionResponse,
-} from '../types/cart-api-types';
+} from '../types/cart-api.types';
 
 function sleep(ms: number) {
 	return new Promise((resolve) => setTimeout(resolve, ms));

@@ -1,7 +1,7 @@
 import { SearchParamsOption } from 'ky';
 
 import { clientApi } from '@/lib/http/client-api';
-import type { IMarket, IMarketCode, IOffer, IOrderBump, IProduct } from '../types/commerce';
+import type { IMarket, IMarketCode, IOffer, IOrderBump, IProduct } from '../types/commerce-entity-types';
 
 interface IRequest {
 	market?: IMarketCode;

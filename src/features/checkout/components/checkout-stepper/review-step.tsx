@@ -44,8 +44,7 @@ export function ReviewStep({ form, selection, isBrazil }: ReviewStepProps) {
 						items={[
 							['Nome', values.fullName || '—'],
 							['E-mail', values.email || '—'],
-							['Idade', values.age ? String(values.age) : '—'],
-							['Atividade', values.sportPractice || '—'],
+							['Telefone', values.phone || '—'],
 						]}
 					/>
 

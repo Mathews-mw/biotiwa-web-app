@@ -62,7 +62,8 @@ export function RegisterForm() {
 		}
 
 		toast.success('Cadastro realizado com sucesso');
-		router.replace(`/login?email=${data.email}`);
+		router.replace(nextPath);
+		router.refresh();
 	}
 
 	const loginHref = `/login?next=${encodeURIComponent(nextPath)}`;

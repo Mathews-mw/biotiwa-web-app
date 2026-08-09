@@ -144,7 +144,7 @@ export function LoginForm() {
 			<p className="mt-6 text-center text-sm text-white/45">
 				Ainda não tem conta?{' '}
 				<Link href={registerHref} className="text-brand-gold font-medium">
-					Criar cadastro
+					Criar conta
 				</Link>
 			</p>
 		</Card>

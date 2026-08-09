@@ -6,16 +6,16 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { clearStoredCheckoutDraft, getStoredCheckoutDraft, storeCheckoutDraft } from '../lib/checkout-draft-storage';
 
 import type { ICheckoutDraftValues } from '../types/checkout-draft';
-import type { ICheckoutFormData } from '../schemas/checkout-schema';
+import type { ICheckoutFormData, ICheckoutFormInput } from '../schemas/checkout-schema';
 import { CHECKOUT_DRAFT_CUSTOM_EVENT, CHECKOUT_DRAFTS_STORAGE_KEY } from '../constants/checkout-storage';
 
 type UseCheckoutDraftParams = {
-	form: UseFormReturn<ICheckoutFormData>;
+	form: UseFormReturn<ICheckoutFormInput>;
 	userId: string | null;
 	enabled?: boolean;
 };
 
-const draftFields: FieldPath<ICheckoutFormData>[] = [
+const draftFields: FieldPath<ICheckoutFormInput>[] = [
 	'market',
 	'fullName',
 	'email',
@@ -238,7 +238,7 @@ export function useCheckoutDraft({ form, userId, enabled = true }: UseCheckoutDr
 	};
 }
 
-function pickDraftValues(values: ICheckoutFormData): ICheckoutDraftValues {
+function pickDraftValues(values: ICheckoutFormInput): ICheckoutDraftValues {
 	const rawAge = values.age as unknown;
 
 	const age = rawAge === '' || rawAge === undefined || rawAge === null ? undefined : Number(rawAge);

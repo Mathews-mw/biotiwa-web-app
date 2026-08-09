@@ -40,7 +40,7 @@ export function CheckoutStepper({ steps, currentStepIndex }: CheckoutStepperProp
 
 							<p className="mt-3 text-sm font-medium">{step.title}</p>
 
-							<p className="mt-1 hidden text-xs leading-5 text-white/40 sm:block">{step.description}</p>
+							<p className="mt-1 text-xs leading-5 text-white/40 sm:block">{step.description}</p>
 						</div>
 					);
 				})}

@@ -6,7 +6,7 @@ import { getPublicOffersRequest } from '../http-requests/get-public-offers.reque
 
 import type { ICheckoutQuoteInput, ICreateCheckoutSessionInput, IGetOffersParams } from '../api/commerce-api-types';
 
-export function usePublicOffersQuery(params: IGetOffersParams) {
+export function useGetPublicOffersQuery(params: IGetOffersParams) {
 	return useQuery({
 		queryKey: commerceQueryKeys.offers(params),
 		queryFn: () => getPublicOffersRequest(params),

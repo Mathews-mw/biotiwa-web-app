@@ -1,25 +1,26 @@
 'use client';
 
 import Image from 'next/image';
+import { toast } from 'sonner';
 import { motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
-import type { IMarketCode } from '../types/commerce';
+import type { IMarketCode } from '../types/commerce-entity-types';
 
 import { cn } from '@/lib/utils';
 import { formatMoney } from '../lib/format-money';
-import { useSessionQuery } from '@/features/auth/hooks/use-auth-queries';
 import { useTrackEvent } from '@/features/tracking/hooks/use-track-event';
-import { buildCheckoutPath } from '@/features/checkout/lib/build-checkout-path';
-import { useSaveCartSelectionMutation } from '@/features/cart/hooks/use-cart-queries';
-import { useCheckoutQuoteQuery, usePublicOffersQuery } from '@/features/commerce/hooks/use-commerce-queries';
+import { useAddCartItemMutation } from '@/features/cart/hooks/use-cart-queries';
+import { useCheckoutQuoteQuery, useGetPublicOffersQuery } from '../hooks/use-commerce-queries';
 
 import { SummaryRow } from './summary-row';
+import { OfferOption } from './offer-option';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { getOfferTotalQuantity } from '../lib/get-offer-total-quantity';
+import { OrderBumpOption } from './order-bump-option';
+import { buildCheckoutStartPath } from '@/features/checkout/lib/build-checkout-start-path';
 
 const availableMarkets = [
 	{
@@ -43,10 +44,10 @@ export function ProductOfferSection() {
 	const [includeOrderBump, setIncludeOrderBump] = useState(false);
 
 	const { track } = useTrackEvent();
-	const sessionQuery = useSessionQuery();
-	const saveCartSelectionMutation = useSaveCartSelectionMutation();
 
-	const offersQuery = usePublicOffersQuery({
+	const addCartItemMutation = useAddCartItemMutation();
+
+	const offersQuery = useGetPublicOffersQuery({
 		market: selectedMarketCode,
 	});
 
@@ -72,9 +73,6 @@ export function ProductOfferSection() {
 
 		const defaultOffer = offersQuery.data.offers.find((offer) => offer.is_highlighted) ?? offersQuery.data.offers[0];
 
-		// Defer setting state to avoid synchronous setState inside effect which can
-		// trigger cascading renders (lint: react-hooks/set-state-in-effect).
-		// Using setTimeout 0 schedules the update after the current render.
 		setTimeout(() => setSelectedOfferId(defaultOffer?.id ?? null));
 	}, [offersQuery.data, selectedOfferId]);
 
@@ -112,7 +110,7 @@ export function ProductOfferSection() {
 	}
 
 	async function handleGoToCheckout() {
-		if (!selectedOfferId) {
+		if (!selectedOfferId || !selectedMarketCode) {
 			return;
 		}
 
@@ -127,24 +125,15 @@ export function ProductOfferSection() {
 			},
 		});
 
-		const nextCheckoutPath = buildCheckoutPath({
-			market: selectedMarketCode,
+		const checkoutStartPath = buildCheckoutStartPath({
+			marketCode: selectedMarketCode,
 			offerId: selectedOfferId,
-			includeOrderBump,
+			orderBumpId: includeOrderBump && currentOrderBump ? currentOrderBump.id : null,
 		});
 
-		const userId = sessionQuery.data?.session?.user.id;
+		console.log('checkoutStartPath: ', checkoutStartPath);
 
-		if (userId) {
-			await saveCartSelectionMutation.mutateAsync({
-				userId,
-				market: selectedMarketCode,
-				offerId: selectedOfferId,
-				includeOrderBump,
-			});
-		}
-
-		router.push(nextCheckoutPath);
+		router.push(checkoutStartPath);
 	}
 
 	useEffect(() => {
@@ -259,6 +248,7 @@ export function ProductOfferSection() {
 					<div>
 						<p className="text-sm font-medium text-white/50">País de compra</p>
 
+						{/* Market options */}
 						<div className="mt-4 grid grid-cols-2 gap-3">
 							{availableMarkets.map((market) => {
 								const isSelected = market.code === selectedMarketCode;
@@ -293,70 +283,16 @@ export function ProductOfferSection() {
 							{marketOffers.map((offer) => {
 								const isSelected = selectedOffer?.id === offer.id;
 
-								const totalOfferQuantity = getOfferTotalQuantity(offer);
-								const originalAmount = offer.unit_amount * totalOfferQuantity;
-
-								const finalAmount = originalAmount - Math.round(originalAmount * (offer.discount_percent / 100));
-
 								return (
-									<button
+									<OfferOption
 										key={offer.id}
-										type="button"
-										onClick={() => {
-											setSelectedOfferId(offer.id);
-
-											track({
-												eventType: 'offer_selected',
-												market: selectedMarketCode,
-												payload: {
-													offerId: offer.id,
-													offerName: offer.name,
-													quantity: totalOfferQuantity,
-													discountPercent: offer.discount_percent,
-												},
-											});
-										}}
-										className={cn(
-											'relative rounded-3xl border p-5 text-left transition-all',
-											isSelected ? 'border-brand-gold bg-white/8' : 'border-white/10 bg-white/2.5 hover:border-white/25'
-										)}
-									>
-										{offer.is_highlighted ? (
-											<span className="bg-brand-gold absolute top-4 right-4 rounded-full px-3 py-1 text-xs font-medium text-[#16091f]">
-												Mais escolhido
-											</span>
-										) : null}
-
-										<h3 className="text-xl font-medium">{offer.name}</h3>
-
-										<p className="mt-2 max-w-md text-sm leading-6 text-white/50">{offer.description}</p>
-
-										<div className="mt-5 flex flex-wrap items-end gap-3">
-											<span className="text-3xl font-semibold tracking-[-0.04em]">
-												{formatMoney({
-													amount: finalAmount,
-													currency,
-													locale,
-												})}
-											</span>
-
-											{offer.discount_percent > 0 ? (
-												<>
-													<span className="pb-1 text-sm text-white/35 line-through">
-														{formatMoney({
-															amount: originalAmount,
-															currency,
-															locale,
-														})}
-													</span>
-
-													<span className="text-brand-gold pb-1 text-sm font-medium">
-														{offer.discount_percent}% OFF
-													</span>
-												</>
-											) : null}
-										</div>
-									</button>
+										offer={offer}
+										isSelected={isSelected}
+										selectedMarketCode={currentMarket.code}
+										currency={currency}
+										locale={locale}
+										onSetSelectedOfferId={(offerId) => setSelectedOfferId(offerId)}
+									/>
 								);
 							})}
 						</div>
@@ -366,9 +302,12 @@ export function ProductOfferSection() {
 						<>
 							<Separator className="my-7 bg-white/10" />
 
-							<button
-								type="button"
-								onClick={() => {
+							<OrderBumpOption
+								currentOrderBump={currentOrderBump}
+								includeOrderBump={includeOrderBump}
+								currency={currency}
+								locale={locale}
+								onSetIncludeOrderBump={() => {
 									setIncludeOrderBump((current) => {
 										const nextValue = !current;
 
@@ -385,39 +324,7 @@ export function ProductOfferSection() {
 										return nextValue;
 									});
 								}}
-								className={cn(
-									'flex w-full items-start gap-4 rounded-3xl border p-5 text-left transition-all',
-									includeOrderBump
-										? 'border-brand-gold bg-brand-gold/10'
-										: 'border-white/10 bg-white/2.5 hover:border-white/25'
-								)}
-							>
-								<span
-									className={cn(
-										'mt-1 flex size-5 shrink-0 items-center justify-center rounded-md border',
-										includeOrderBump ? 'border-brand-gold bg-brand-gold' : 'border-white/25'
-									)}
-								>
-									{includeOrderBump ? <span className="size-2 rounded-sm bg-[#16091f]" /> : null}
-								</span>
-
-								<span className="flex-1">
-									<span className="text-brand-gold block text-sm font-medium">Oferta adicional</span>
-
-									<span className="mt-1 block text-lg font-medium">{currentOrderBump.name}</span>
-
-									<span className="mt-2 block text-sm leading-6 text-white/45">{currentOrderBump.description}</span>
-
-									<span className="mt-4 block text-xl font-semibold">
-										+
-										{formatMoney({
-											amount: currentOrderBump.unit_amount,
-											currency,
-											locale,
-										})}
-									</span>
-								</span>
-							</button>
+							/>
 						</>
 					) : null}
 
@@ -484,11 +391,11 @@ export function ProductOfferSection() {
 
 								<Button
 									size="lg"
-									disabled={!selectedOfferId || quoteQuery.isFetching || saveCartSelectionMutation.isPending}
+									disabled={!selectedOfferId || quoteQuery.isFetching || addCartItemMutation.isPending}
 									className="mt-7 w-full rounded-full bg-[#f5efe4] text-[#16091f] hover:bg-white"
 									onClick={handleGoToCheckout}
 								>
-									{saveCartSelectionMutation.isPending ? 'Salvando carrinho...' : 'Continuar para checkout'}
+									{addCartItemMutation.isPending ? 'Salvando carrinho...' : 'Continuar para checkout'}
 								</Button>
 							</>
 						)}

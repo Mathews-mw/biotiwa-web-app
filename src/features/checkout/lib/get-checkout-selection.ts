@@ -1,4 +1,4 @@
-import type { IMarketCode, IOffer, IOrderBump } from '@/features/commerce/types/commerce';
+import type { IMarketCode, IOffer, IOrderBump } from '@/features/commerce/types/commerce-entity-types';
 
 import { calculateOrderSummary } from '@/features/lib/calculate-order-summary';
 import { markets, offers, orderBumps } from '@/features/commerce/data/mock-catalog';

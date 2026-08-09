@@ -1,4 +1,4 @@
-import type { IMarket, IMarketCode, IOffer, IOrderBump, IOrderSummary, IProduct } from '../types/commerce';
+import type { IMarket, IMarketCode, IOffer, IOrderBump, IOrderSummary, IProduct } from '../types/commerce-entity-types';
 
 export type IGetOffersParams = {
 	market: IMarketCode;
@@ -29,8 +29,8 @@ export type ICheckoutQuoteResponse = {
 export type ICheckoutCustomerInput = {
 	fullName: string;
 	email: string;
-	age: number;
-	sportPractice: string;
+	birthDate: string;
+	phone?: string;
 	postalCode: string;
 	addressLine1: string;
 	number?: string;

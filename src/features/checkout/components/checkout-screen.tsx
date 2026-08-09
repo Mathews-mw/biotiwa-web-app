@@ -5,20 +5,20 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, type FieldPath } from 'react-hook-form';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-import type { IMarketCode } from '@/features/commerce/types/commerce';
+import type { IMarketCode } from '@/features/commerce/types/commerce-entity-types';
 import { checkoutSchema, type ICheckoutFormData, type ICheckoutFormInput } from '../schemas/checkout-schema';
 
 import { useCheckoutDraft } from '../hooks/use-checkout-draft';
+import { useAuthSession } from '@/features/auth/hooks/use-auth-session';
 import { useSessionQuery } from '@/features/auth/hooks/use-auth-queries';
 import { useTrackEvent } from '@/features/tracking/hooks/use-track-event';
+import { useGetActiveCartQuery } from '@/features/cart/hooks/use-cart-queries';
 import { CheckoutStepper, type CheckoutStep } from './checkout-stepper/checkout-stepper';
-import { useCartQuery, useSaveCartSelectionMutation } from '@/features/cart/hooks/use-cart-queries';
 import {
 	useCheckoutQuoteQuery,
 	useCreateCheckoutSessionMutation,
 } from '@/features/commerce/hooks/use-commerce-queries';
 
-import { CheckoutSummary } from './checkout-summary';
 import { ReviewStep } from './checkout-stepper/review-step';
 import { AddressStep } from './checkout-stepper/address-step';
 import { CheckoutDraftStatus } from './checkout-draft-status';
@@ -26,8 +26,11 @@ import { CheckoutStateMessage } from './checkout-state-message';
 import { CustomerStep } from './checkout-stepper/customer-step';
 import { CheckoutOfferStep } from './checkout-stepper/checkout-offer-step';
 import { CheckoutStepActions } from './checkout-stepper/checkout-step-actions';
+import { CartSummaryCard } from '@/features/commerce/components/cart-summary-card';
 
 import { ArrowLeft } from 'lucide-react';
+import { birthdayFormatter } from '@/utils/birthday-formatter';
+import { phoneFormatter } from '@/utils/phone-formatter';
 
 const checkoutSteps: CheckoutStep[] = [
 	{
@@ -56,6 +59,8 @@ export function CheckoutScreen() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 
+	const { isAuthenticated } = useAuthSession();
+
 	const marketParam = searchParams.get('market');
 	const offerParam = searchParams.get('offer');
 	const bumpParam = searchParams.get('bump');
@@ -65,17 +70,16 @@ export function CheckoutScreen() {
 	const sessionQuery = useSessionQuery();
 	const user = sessionQuery.data?.session?.user ?? null;
 
-	const cartQuery = useCartQuery(user?.id ?? null);
-	const saveCartSelectionMutation = useSaveCartSelectionMutation();
+	const activeCartQuery = useGetActiveCartQuery({ enabled: isAuthenticated });
 
-	const cart = cartQuery.data?.cart ?? null;
+	const cart = activeCartQuery.data?.cart ?? null;
+	const summary = activeCartQuery.data?.summary ?? null;
 
 	const selectedMarketCode: IMarketCode =
-		marketParam === 'US' ? 'US' : marketParam === 'BR' ? 'BR' : (cart?.market ?? 'BR');
+		marketParam === 'US' ? 'US' : marketParam === 'BR' ? 'BR' : (cart?.market?.code ?? 'BR');
 
-	const selectedOfferId = offerParam ?? cart?.offerId ?? null;
-
-	const includeOrderBump = offerParam !== null ? bumpParam === '1' : (cart?.includeOrderBump ?? false);
+	const selectedOfferId = cart?.items.find((item) => !!item.offer)?.offer_id;
+	const includeOrderBump = cart?.items.some((item) => item.order_bump_id) ?? false;
 
 	const quoteInput = useMemo(() => {
 		if (!selectedOfferId) {
@@ -101,9 +105,9 @@ export function CheckoutScreen() {
 		defaultValues: {
 			market: selectedMarketCode,
 			fullName: '',
-			email: '',
-			age: undefined,
-			sportPractice: '',
+			email: user?.email ?? '',
+			birthDate: '',
+			phone: '',
 			postalCode: '',
 			addressLine1: '',
 			number: '',
@@ -141,6 +145,20 @@ export function CheckoutScreen() {
 				shouldDirty: false,
 			});
 		}
+
+		if (!form.getValues('birthDate') && currentUser.profile.birth_date) {
+			form.setValue('birthDate', birthdayFormatter(currentUser.profile.birth_date), {
+				shouldValidate: true,
+				shouldDirty: false,
+			});
+		}
+
+		if (!form.getValues('phone') && currentUser.profile.phone) {
+			form.setValue('phone', phoneFormatter(currentUser.profile.phone), {
+				shouldValidate: true,
+				shouldDirty: false,
+			});
+		}
 	}, [sessionQuery.data?.session?.user, form]);
 
 	useEffect(() => {
@@ -152,15 +170,15 @@ export function CheckoutScreen() {
 			return;
 		}
 
-		saveCartSelectionMutation.mutate({
-			userId: user.id,
-			market: quoteInput.market,
-			offerId: quoteInput.offerId,
-			includeOrderBump: quoteInput.includeOrderBump,
-		});
+		// saveCartSelectionMutation.mutate({
+		// 	userId: user.id,
+		// 	market: quoteInput.market,
+		// 	offerId: quoteInput.offerId,
+		// 	includeOrderBump: quoteInput.includeOrderBump,
+		// });
 	}, [user?.id, offerParam, quoteInput?.market, quoteInput?.offerId, quoteInput?.includeOrderBump]);
 
-	if (cartQuery.isLoading && !offerParam) {
+	if (activeCartQuery.isLoading && !offerParam) {
 		return (
 			<CheckoutStateMessage
 				title="Carregando seu carrinho"
@@ -226,8 +244,8 @@ export function CheckoutScreen() {
 			customer: {
 				fullName: data.fullName,
 				email: data.email,
-				age: data.age,
-				sportPractice: data.sportPractice,
+				birthDate: data.birthDate,
+				phone: data.phone,
 				postalCode: data.postalCode,
 				addressLine1: data.addressLine1,
 				number: data.number,
@@ -318,7 +336,6 @@ export function CheckoutScreen() {
 									marketCode={selectedMarketCode}
 									selectedOfferId={selectedOfferId}
 									includeOrderBump={includeOrderBump}
-									userId={user?.id ?? null}
 								/>
 							) : null}
 
@@ -348,8 +365,9 @@ export function CheckoutScreen() {
 						</form>
 					</section>
 
-					<aside className="hidden lg:sticky lg:top-8 lg:block">
-						<CheckoutSummary locale={locale} currency={currency} selection={selection} />
+					<aside className="lg:sticky lg:top-8 lg:block">
+						{/* <CheckoutSummary locale={locale} currency={currency} selection={selection} /> */}
+						{summary && <CartSummaryCard summary={summary} />}
 					</aside>
 				</div>
 			</div>
@@ -359,7 +377,7 @@ export function CheckoutScreen() {
 
 function getFieldsForStep(stepId: CheckoutStep['id'], isBrazil: boolean): FieldPath<ICheckoutFormData>[] {
 	if (stepId === 'customer') {
-		return ['fullName', 'email', 'age', 'sportPractice'];
+		return ['fullName', 'email', 'birthDate', 'phone'];
 	}
 
 	if (stepId === 'address') {

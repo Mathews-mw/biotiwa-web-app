@@ -1,4 +1,4 @@
-import type { ICart } from '../types/cart-api-types';
+import type { ICart } from '../types/cart-api.types';
 
 import { CART_CHANGED_EVENT } from '../constants/cart-events';
 import { CART_BROADCAST_CHANNEL, CARTS_STORAGE_KEY } from '../constants/cart-storage';

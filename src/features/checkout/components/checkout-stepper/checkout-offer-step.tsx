@@ -1,4 +1,4 @@
-import type { IMarketCode } from '@/features/commerce/types/commerce';
+import type { IMarketCode } from '@/features/commerce/types/commerce-entity-types';
 
 import { Card } from '@/components/ui/card';
 import { CheckoutOfferEditor } from '../checkout-offer-editor';
@@ -9,10 +9,9 @@ type CheckoutOfferStepProps = {
 	marketCode: IMarketCode;
 	selectedOfferId: string;
 	includeOrderBump: boolean;
-	userId: string | null;
 };
 
-export function CheckoutOfferStep({ marketCode, selectedOfferId, includeOrderBump, userId }: CheckoutOfferStepProps) {
+export function CheckoutOfferStep({ marketCode, selectedOfferId, includeOrderBump }: CheckoutOfferStepProps) {
 	return (
 		<div className="grid gap-5">
 			<Card className="border-white/10 bg-white/4 p-6 text-white">
@@ -36,7 +35,6 @@ export function CheckoutOfferStep({ marketCode, selectedOfferId, includeOrderBum
 				marketCode={marketCode}
 				selectedOfferId={selectedOfferId}
 				includeOrderBump={includeOrderBump}
-				userId={userId}
 			/>
 		</div>
 	);

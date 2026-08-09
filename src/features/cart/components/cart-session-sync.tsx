@@ -3,41 +3,48 @@
 import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
+import type { ICartBroadcastEvent } from '../lib/cart-broadcast';
+
 import { cartQueryKeys } from '../api/cart-query-keys';
-import { CART_CHANGED_EVENT } from '../constants/cart-events';
-import { CART_BROADCAST_CHANNEL, CARTS_STORAGE_KEY } from '../constants/cart-storage';
+import { CART_BROADCAST_CHANNEL, CART_CHANGED_EVENT } from '../constants/cart-events';
 
 export function CartSessionSync() {
 	const queryClient = useQueryClient();
 
 	useEffect(() => {
-		function syncCart() {
+		function refreshCart() {
 			queryClient.invalidateQueries({
-				queryKey: cartQueryKeys.all,
+				queryKey: cartQueryKeys.active(),
 			});
 		}
 
-		function handleStorage(event: StorageEvent) {
-			if (event.key === CARTS_STORAGE_KEY) {
-				syncCart();
-			}
+		function handleBroadcastEvent(_event: ICartBroadcastEvent) {
+			refreshCart();
 		}
-
-		window.addEventListener('storage', handleStorage);
-		window.addEventListener(CART_CHANGED_EVENT, syncCart);
 
 		let channel: BroadcastChannel | null = null;
 
 		try {
 			channel = new BroadcastChannel(CART_BROADCAST_CHANNEL);
-			channel.onmessage = syncCart;
+
+			channel.onmessage = (event: MessageEvent<ICartBroadcastEvent>) => {
+				handleBroadcastEvent(event.data);
+			};
 		} catch {
-			channel = null;
+			const customEventHandler = (event: Event) => {
+				const customEvent = event as CustomEvent<ICartBroadcastEvent>;
+
+				handleBroadcastEvent(customEvent.detail);
+			};
+
+			window.addEventListener(CART_CHANGED_EVENT, customEventHandler);
+
+			return () => {
+				window.removeEventListener(CART_CHANGED_EVENT, customEventHandler);
+			};
 		}
 
 		return () => {
-			window.removeEventListener('storage', handleStorage);
-			window.removeEventListener(CART_CHANGED_EVENT, syncCart);
 			channel?.close();
 		};
 	}, [queryClient]);

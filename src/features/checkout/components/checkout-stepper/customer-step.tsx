@@ -1,9 +1,12 @@
-import { UseFormReturn } from 'react-hook-form';
+import { Controller, UseFormReturn } from 'react-hook-form';
 
-import { Field } from '@/components/field';
+import type { ICheckoutFormInput } from '../../schemas/checkout-schema';
+
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { ICheckoutFormInput } from '../../schemas/checkout-schema';
+import { DateInput } from '@/components/date-input';
+import { PhoneInput } from '@/components/phone-input';
+import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 
 import { ShieldCheck, UserRound } from 'lucide-react';
 
@@ -33,40 +36,68 @@ export function CustomerStep({ form }: CustomerStepProps) {
 			</div>
 
 			<div className="mt-7 grid gap-5 sm:grid-cols-2">
-				<Field label="Nome completo" error={form.formState.errors.fullName?.message}>
+				<Field data-invalid={!!form.formState.errors.fullName}>
+					<FieldLabel htmlFor="fullName">Nome completo</FieldLabel>
 					<Input
 						placeholder="Seu nome"
+						data-invalid={!!form.formState.errors.fullName}
 						className="border-white/10 bg-white/5 text-white placeholder:text-white/25"
 						{...form.register('fullName')}
 					/>
+					<FieldError errors={[form.formState.errors.fullName]} />
 				</Field>
 
-				<Field label="E-mail" error={form.formState.errors.email?.message}>
+				<Field data-invalid={!!form.formState.errors.email}>
+					<FieldLabel htmlFor="email">Nome completo</FieldLabel>
 					<Input
 						type="email"
 						placeholder="voce@email.com"
+						data-invalid={!!form.formState.errors.email}
 						className="border-white/10 bg-white/5 text-white placeholder:text-white/25"
 						{...form.register('email')}
 					/>
+					<FieldError errors={[form.formState.errors.email]} />
 				</Field>
 
-				<Field label="Idade" error={form.formState.errors.age?.message}>
-					<Input
-						type="number"
-						inputMode="numeric"
-						placeholder="Ex: 32"
-						className="border-white/10 bg-white/5 text-white placeholder:text-white/25"
-						{...form.register('age')}
-					/>
-				</Field>
+				<Controller
+					name="birthDate"
+					control={form.control}
+					render={({ field, fieldState }) => {
+						return (
+							<Field data-invalid={fieldState.invalid} className="space-y-2">
+								<FieldLabel htmlFor="birthday">Data de nascimento*</FieldLabel>
+								<DateInput
+									{...field}
+									id="birthDate"
+									aria-invalid={fieldState.invalid}
+									value={field.value}
+									onChange={field.onChange}
+								/>
+								<FieldError errors={[fieldState.error]} />
+							</Field>
+						);
+					}}
+				/>
 
-				<Field label="Esporte ou rotina de atividade" error={form.formState.errors.sportPractice?.message}>
-					<Input
-						placeholder="Ex: caminhada, academia, corrida"
-						className="border-white/10 bg-white/5 text-white placeholder:text-white/25"
-						{...form.register('sportPractice')}
-					/>
-				</Field>
+				<Controller
+					name="phone"
+					control={form.control}
+					render={({ field, fieldState }) => {
+						return (
+							<Field data-invalid={fieldState.invalid} className="space-y-2">
+								<FieldLabel htmlFor="phone">Telefone</FieldLabel>
+								<PhoneInput
+									{...field}
+									id="phone"
+									aria-invalid={fieldState.invalid}
+									value={field.value}
+									onChange={field.onChange}
+								/>
+								<FieldError errors={[fieldState.error]} />
+							</Field>
+						);
+					}}
+				/>
 			</div>
 		</Card>
 	);

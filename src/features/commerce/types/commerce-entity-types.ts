@@ -78,3 +78,15 @@ export interface IOrderSummary {
 	totalAmount: number;
 	currency: ICurrencyCode;
 }
+
+export interface IOfferItemDetails extends IOfferItem {
+	product: IProduct;
+}
+
+export interface IOfferDetails extends IOffer {
+	items: Array<IOfferItemDetails>;
+}
+
+export interface IOrderBumpDetails extends IOrderBump {
+	product: IProduct;
+}

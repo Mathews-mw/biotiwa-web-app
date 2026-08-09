@@ -1,4 +1,4 @@
-import type { IMarket, IOffer, IOrderBump, IProduct } from '@/features/commerce/types/commerce';
+import type { IMarket, IOffer, IOrderBump, IProduct } from '@/features/commerce/types/commerce-entity-types';
 
 export const markets: IMarket[] = [
 	{

@@ -1,6 +1,6 @@
 import { getOfferTotalQuantity } from './get-offer-total-quantity';
 
-import type { IMarket, IOffer, IOrderBump, IOrderSummary } from '../types/commerce';
+import type { IMarket, IOffer, IOrderBump, IOrderSummary } from '../types/commerce-entity-types';
 
 type ICalculateOrderSummaryParams = {
 	market: IMarket;

@@ -1,4 +1,4 @@
-import { IMarketCode } from '@/features/commerce/types/commerce';
+import { IMarketCode } from '@/features/commerce/types/commerce-entity-types';
 
 export interface IUser {
 	id: string;
