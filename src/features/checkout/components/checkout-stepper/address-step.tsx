@@ -1,7 +1,7 @@
 import { UseFormReturn } from 'react-hook-form';
 
+import type { ICheckoutQuote } from '../../types/checkout-types';
 import type { ICheckoutFormInput } from '../../schemas/checkout-schema';
-import type { ICheckoutQuoteResponse } from '@/features/commerce/api/commerce-api-types';
 
 import { Field } from '@/components/field';
 import { Card } from '@/components/ui/card';
@@ -11,11 +11,13 @@ import { MapPinned } from 'lucide-react';
 
 type AddressStepProps = {
 	form: UseFormReturn<ICheckoutFormInput>;
+	quote: ICheckoutQuote;
 	isBrazil: boolean;
-	selection: ICheckoutQuoteResponse;
 };
 
-export function AddressStep({ form, isBrazil, selection }: AddressStepProps) {
+export function AddressStep({ form, isBrazil, quote }: AddressStepProps) {
+	const marketLAbel = quote.market_code === 'BR' ? 'Brasil' : 'United States';
+
 	return (
 		<Card className="border-white/10 bg-white/4 p-6 text-white">
 			<div className="flex items-start gap-4">
@@ -27,7 +29,7 @@ export function AddressStep({ form, isBrazil, selection }: AddressStepProps) {
 					<h2 className="text-xl font-medium">Endereço de entrega</h2>
 
 					<p className="mt-2 text-sm leading-6 text-white/45">
-						Mercado selecionado: <span className="font-medium text-white">{selection.market.label}</span>
+						Mercado selecionado: <span className="font-medium text-white">{marketLAbel}</span>
 					</p>
 				</div>
 			</div>

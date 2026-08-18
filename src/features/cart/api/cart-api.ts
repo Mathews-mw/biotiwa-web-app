@@ -1,14 +1,6 @@
 import { getCheckoutQuote } from '@/features/commerce/api/commerce-api';
 import { clearStoredCart, getStoredCart, storeCart } from '../lib/cart-storage';
 
-import type {
-	IClearCartInput,
-	IGetCartInput,
-	IGetCartResponse,
-	ISaveCartSelectionInput,
-	ISaveCartSelectionResponse,
-} from '../types/cart-api.types';
-
 function sleep(ms: number) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }

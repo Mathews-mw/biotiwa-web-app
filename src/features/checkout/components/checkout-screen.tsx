@@ -1,36 +1,33 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, type FieldPath } from 'react-hook-form';
-import { useRouter, useSearchParams } from 'next/navigation';
 
-import type { IMarketCode } from '@/features/commerce/types/commerce-entity-types';
 import { checkoutSchema, type ICheckoutFormData, type ICheckoutFormInput } from '../schemas/checkout-schema';
 
+import { phoneFormatter } from '@/utils/phone-formatter';
 import { useCheckoutDraft } from '../hooks/use-checkout-draft';
+import { birthdayFormatter } from '@/utils/birthday-formatter';
 import { useAuthSession } from '@/features/auth/hooks/use-auth-session';
 import { useSessionQuery } from '@/features/auth/hooks/use-auth-queries';
 import { useTrackEvent } from '@/features/tracking/hooks/use-track-event';
 import { useGetActiveCartQuery } from '@/features/cart/hooks/use-cart-queries';
 import { CheckoutStepper, type CheckoutStep } from './checkout-stepper/checkout-stepper';
-import {
-	useCheckoutQuoteQuery,
-	useCreateCheckoutSessionMutation,
-} from '@/features/commerce/hooks/use-commerce-queries';
+import { useCheckoutQuoteQuery, useCreateCheckoutSessionMutation } from '../hooks/use-checkout-queries';
 
 import { ReviewStep } from './checkout-stepper/review-step';
+import { CheckoutSummaryCard } from './checkout-summary-card';
 import { AddressStep } from './checkout-stepper/address-step';
 import { CheckoutDraftStatus } from './checkout-draft-status';
 import { CheckoutStateMessage } from './checkout-state-message';
 import { CustomerStep } from './checkout-stepper/customer-step';
 import { CheckoutOfferStep } from './checkout-stepper/checkout-offer-step';
 import { CheckoutStepActions } from './checkout-stepper/checkout-step-actions';
-import { CartSummaryCard } from '@/features/commerce/components/cart-summary-card';
 
 import { ArrowLeft } from 'lucide-react';
-import { birthdayFormatter } from '@/utils/birthday-formatter';
-import { phoneFormatter } from '@/utils/phone-formatter';
 
 const checkoutSteps: CheckoutStep[] = [
 	{
@@ -57,55 +54,38 @@ const checkoutSteps: CheckoutStep[] = [
 
 export function CheckoutScreen() {
 	const router = useRouter();
-	const searchParams = useSearchParams();
-
-	const { isAuthenticated } = useAuthSession();
-
-	const marketParam = searchParams.get('market');
-	const offerParam = searchParams.get('offer');
-	const bumpParam = searchParams.get('bump');
 
 	const [currentStepIndex, setCurrentStepIndex] = useState(0);
 
+	const { isAuthenticated } = useAuthSession();
 	const sessionQuery = useSessionQuery();
+
 	const user = sessionQuery.data?.session?.user ?? null;
 
-	const activeCartQuery = useGetActiveCartQuery({ enabled: isAuthenticated });
+	const activeCartQuery = useGetActiveCartQuery({
+		enabled: isAuthenticated,
+	});
 
 	const cart = activeCartQuery.data?.cart ?? null;
-	const summary = activeCartQuery.data?.summary ?? null;
+	const cartHasItems = Boolean(cart && cart.items.length > 0);
 
-	const selectedMarketCode: IMarketCode =
-		marketParam === 'US' ? 'US' : marketParam === 'BR' ? 'BR' : (cart?.market?.code ?? 'BR');
+	const quoteQuery = useCheckoutQuoteQuery({
+		enabled: isAuthenticated && cartHasItems,
+	});
 
-	const selectedOfferId = cart?.items.find((item) => !!item.offer)?.offer_id;
-	const includeOrderBump = cart?.items.some((item) => item.order_bump_id) ?? false;
+	const quote = quoteQuery.data?.quote ?? null;
 
-	const quoteInput = useMemo(() => {
-		if (!selectedOfferId) {
-			return null;
-		}
-
-		return {
-			market: selectedMarketCode,
-			offerId: selectedOfferId,
-			includeOrderBump,
-		};
-	}, [selectedMarketCode, selectedOfferId, includeOrderBump]);
-
-	const quoteQuery = useCheckoutQuoteQuery(quoteInput);
 	const createCheckoutSessionMutation = useCreateCheckoutSessionMutation();
-	const { track } = useTrackEvent();
 
-	const selection = quoteQuery.data;
+	const { track } = useTrackEvent();
 
 	const form = useForm<ICheckoutFormInput, unknown, ICheckoutFormData>({
 		resolver: zodResolver(checkoutSchema),
 		mode: 'onTouched',
 		defaultValues: {
-			market: selectedMarketCode,
+			market: 'BR',
 			fullName: '',
-			email: user?.email ?? '',
+			email: '',
 			birthDate: '',
 			phone: '',
 			postalCode: '',
@@ -126,68 +106,73 @@ export function CheckoutScreen() {
 	});
 
 	useEffect(() => {
-		const currentUser = sessionQuery.data?.session?.user;
-
-		if (!currentUser) {
+		if (!user) {
 			return;
 		}
 
 		if (!form.getValues('fullName')) {
-			form.setValue('fullName', currentUser.name, {
+			form.setValue('fullName', user.name, {
 				shouldValidate: true,
 				shouldDirty: false,
 			});
 		}
 
 		if (!form.getValues('email')) {
-			form.setValue('email', currentUser.email, {
+			form.setValue('email', user.email, {
 				shouldValidate: true,
 				shouldDirty: false,
 			});
 		}
 
-		if (!form.getValues('birthDate') && currentUser.profile.birth_date) {
-			form.setValue('birthDate', birthdayFormatter(currentUser.profile.birth_date), {
+		if (!form.getValues('birthDate') && user.profile?.birth_date) {
+			form.setValue('birthDate', birthdayFormatter(user.profile.birth_date), {
 				shouldValidate: true,
 				shouldDirty: false,
 			});
 		}
 
-		if (!form.getValues('phone') && currentUser.profile.phone) {
-			form.setValue('phone', phoneFormatter(currentUser.profile.phone), {
+		if (!form.getValues('phone') && user.profile?.phone) {
+			form.setValue('phone', phoneFormatter(user.profile.phone), {
 				shouldValidate: true,
 				shouldDirty: false,
 			});
 		}
-	}, [sessionQuery.data?.session?.user, form]);
+	}, [user, form]);
 
 	useEffect(() => {
-		form.setValue('market', selectedMarketCode);
-	}, [selectedMarketCode, form]);
+		const marketCode = quote?.market_code ?? cart?.market_code;
 
-	useEffect(() => {
-		if (!user || !offerParam || !quoteInput) {
+		if (!marketCode) {
 			return;
 		}
 
-		// saveCartSelectionMutation.mutate({
-		// 	userId: user.id,
-		// 	market: quoteInput.market,
-		// 	offerId: quoteInput.offerId,
-		// 	includeOrderBump: quoteInput.includeOrderBump,
-		// });
-	}, [user?.id, offerParam, quoteInput?.market, quoteInput?.offerId, quoteInput?.includeOrderBump]);
+		form.setValue('market', marketCode, {
+			shouldValidate: true,
+			shouldDirty: false,
+		});
+	}, [quote?.market_code, cart?.market_code, form]);
 
-	if (activeCartQuery.isLoading && !offerParam) {
+	if (activeCartQuery.isLoading) {
 		return (
 			<CheckoutStateMessage
 				title="Carregando seu carrinho"
-				description="Estamos buscando a seleção salva na sua sessão."
+				description="Estamos buscando os itens salvos na sua conta."
 			/>
 		);
 	}
 
-	if (!selectedOfferId) {
+	if (activeCartQuery.isError) {
+		return (
+			<CheckoutStateMessage
+				title="Não foi possível carregar seu carrinho"
+				description="Tente novamente ou volte para selecionar uma oferta."
+				actionLabel="Voltar para a oferta"
+				actionHref="/#oferta"
+			/>
+		);
+	}
+
+	if (!cart || cart.items.length === 0) {
 		return (
 			<CheckoutStateMessage
 				title="Seu carrinho está vazio"
@@ -198,11 +183,11 @@ export function CheckoutScreen() {
 		);
 	}
 
-	if (quoteQuery.isLoading || !selection) {
+	if (quoteQuery.isLoading || !quote) {
 		return (
 			<CheckoutStateMessage
 				title="Preparando seu checkout"
-				description="Estamos calculando os valores da sua oferta."
+				description="Estamos validando seu carrinho e calculando os valores do pedido."
 			/>
 		);
 	}
@@ -210,54 +195,60 @@ export function CheckoutScreen() {
 	if (quoteQuery.isError) {
 		return (
 			<CheckoutStateMessage
-				title="Não foi possível carregar o checkout"
-				description="Tente voltar para a oferta e selecionar novamente."
-				actionLabel="Voltar para a oferta"
+				title="Não foi possível calcular o pedido"
+				description="Revise seu carrinho ou tente novamente."
 				actionHref="/#oferta"
+				actionLabel="Voltar para as ofertas"
 			/>
 		);
 	}
 
-	const locale = selection.market.locale;
-	const currency = selection.market.currency;
-	const isBrazil = selection.market.code === 'BR';
+	const isBrazil = quote.market_code === 'BR';
 	const currentStep = checkoutSteps[currentStepIndex];
 
-	async function handleSubmit(data: ICheckoutFormData) {
-		if (!quoteInput || !selection) {
+	const selectedOfferItem = cart.items.find((item) => {
+		return item.type === 'OFFER' && item.offer;
+	});
+
+	const selectedOrderBumpItem = cart.items.find((item) => {
+		return item.type === 'ORDER_BUMP' && item.order_bump;
+	});
+
+	const selectedOfferId = selectedOfferItem?.offer?.id ?? null;
+	const includeOrderBump = Boolean(selectedOrderBumpItem);
+
+	/*
+	 * O formulário não é enviado para a API, porque o endpoint atual POST /checkout/sessions cria o pedido somente a partir do carrinho ativo.
+	 * Quando entrarmos em endereço/cliente no pedido, aí o endpoint pode passar a receber customer e shipping_address */
+	async function handleSubmit(_data: ICheckoutFormData) {
+		if (!quote) {
 			return;
 		}
 
-		track({
-			eventType: 'checkout_submitted',
-			market: selectedMarketCode,
-			payload: {
-				offerId: quoteInput.offerId,
-				includeOrderBump: quoteInput.includeOrderBump,
-				totalAmount: selection.summary.totalAmount,
-				currency: selection.summary.currency,
-			},
-		});
+		try {
+			track({
+				eventType: 'checkout_submitted',
+				market: quote.market_code,
+				payload: {
+					cartId: quote.cart_id,
+					totalAmount: quote.summary.total_amount,
+					currency: quote.summary.currency,
+					itemsCount: quote.items.length,
+					hasOrderBump: includeOrderBump,
+				},
+			});
 
-		const result = await createCheckoutSessionMutation.mutateAsync({
-			...quoteInput,
-			customer: {
-				fullName: data.fullName,
-				email: data.email,
-				birthDate: data.birthDate,
-				phone: data.phone,
-				postalCode: data.postalCode,
-				addressLine1: data.addressLine1,
-				number: data.number,
-				addressLine2: data.addressLine2,
-				district: data.district,
-				city: data.city,
-				state: data.state,
-				acceptPrivacy: data.acceptPrivacy,
-			},
-		});
+			const checkoutSessionResult = await createCheckoutSessionMutation.mutateAsync();
 
-		router.push(result.checkoutUrl);
+			if (checkoutSessionResult.payment_url) {
+				window.location.assign(checkoutSessionResult.payment_url);
+				return;
+			}
+
+			router.push(`/checkout/pending?order_id=${checkoutSessionResult.order_id}`);
+		} catch {
+			toast.error('Não foi possível criar seu pedido. Tente novamente.');
+		}
 	}
 
 	async function handleNextStep() {
@@ -331,9 +322,10 @@ export function CheckoutScreen() {
 						</div>
 
 						<form onSubmit={form.handleSubmit(handleSubmit)} className="mt-8 grid gap-8" data-clarity-mask="true">
-							{currentStep.id === 'offer' ? (
+							{currentStep.id === 'offer' && selectedOfferId ? (
 								<CheckoutOfferStep
-									marketCode={selectedMarketCode}
+									cart={cart}
+									quote={quote}
 									selectedOfferId={selectedOfferId}
 									includeOrderBump={includeOrderBump}
 								/>
@@ -341,17 +333,15 @@ export function CheckoutScreen() {
 
 							{currentStep.id === 'customer' ? <CustomerStep form={form} /> : null}
 
-							{currentStep.id === 'address' ? (
-								<AddressStep form={form} isBrazil={isBrazil} selection={selection} />
-							) : null}
+							{currentStep.id === 'address' ? <AddressStep form={form} isBrazil={isBrazil} quote={quote} /> : null}
 
 							{currentStep.id === 'review' ? (
-								<ReviewStep form={form} selection={selection} isBrazil={isBrazil} />
+								<ReviewStep form={form} quote={quote} cart={cart} isBrazil={isBrazil} />
 							) : null}
 
 							{createCheckoutSessionMutation.isError ? (
 								<p className="rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-									Não foi possível iniciar o pagamento. Revise os dados e tente novamente.
+									Não foi possível criar seu pedido. Revise os dados e tente novamente.
 								</p>
 							) : null}
 
@@ -366,8 +356,7 @@ export function CheckoutScreen() {
 					</section>
 
 					<aside className="lg:sticky lg:top-8 lg:block">
-						{/* <CheckoutSummary locale={locale} currency={currency} selection={selection} /> */}
-						{summary && <CartSummaryCard summary={summary} />}
+						<CheckoutSummaryCard quote={quote} />
 					</aside>
 				</div>
 			</div>

@@ -1,7 +1,8 @@
 import { UseFormReturn } from 'react-hook-form';
 
+import type { ICheckoutQuote } from '../../types/checkout-types';
 import type { ICheckoutFormInput } from '../../schemas/checkout-schema';
-import type { ICheckoutQuoteResponse } from '@/features/commerce/api/commerce-api-types';
+import type { ICartDetails } from '@/features/cart/types/cart-entities.types';
 
 import { Card } from '@/components/ui/card';
 import { ReviewBlock } from './review-block';
@@ -14,11 +15,12 @@ import { ClipboardCheck } from 'lucide-react';
 
 type ReviewStepProps = {
 	form: UseFormReturn<ICheckoutFormInput>;
-	selection: ICheckoutQuoteResponse;
+	quote: ICheckoutQuote;
+	cart: ICartDetails;
 	isBrazil: boolean;
 };
 
-export function ReviewStep({ form, selection, isBrazil }: ReviewStepProps) {
+export function ReviewStep({ form, quote, isBrazil }: ReviewStepProps) {
 	const values = form.watch();
 
 	return (
@@ -65,9 +67,9 @@ export function ReviewStep({ form, selection, isBrazil }: ReviewStepProps) {
 
 				<div className="lg:hidden">
 					<CheckoutSummary
-						locale={selection.market.locale}
-						currency={selection.market.currency}
-						selection={selection}
+						locale={quote.summary.currency === 'BRL' ? 'pt-BR' : 'en-US'}
+						currency={quote.currency}
+						quote={quote}
 					/>
 				</div>
 			</Card>

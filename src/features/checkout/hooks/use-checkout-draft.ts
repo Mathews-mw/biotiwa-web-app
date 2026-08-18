@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { clearStoredCheckoutDraft, getStoredCheckoutDraft, storeCheckoutDraft } from '../lib/checkout-draft-storage';
 
 import type { ICheckoutDraftValues } from '../types/checkout-draft';
-import type { ICheckoutFormData, ICheckoutFormInput } from '../schemas/checkout-schema';
+import type { ICheckoutFormInput } from '../schemas/checkout-schema';
 import { CHECKOUT_DRAFT_CUSTOM_EVENT, CHECKOUT_DRAFTS_STORAGE_KEY } from '../constants/checkout-storage';
 
 type UseCheckoutDraftParams = {
@@ -19,8 +19,8 @@ const draftFields: FieldPath<ICheckoutFormInput>[] = [
 	'market',
 	'fullName',
 	'email',
-	'age',
-	'sportPractice',
+	'birthDate',
+	'phone',
 	'postalCode',
 	'addressLine1',
 	'number',
@@ -239,16 +239,12 @@ export function useCheckoutDraft({ form, userId, enabled = true }: UseCheckoutDr
 }
 
 function pickDraftValues(values: ICheckoutFormInput): ICheckoutDraftValues {
-	const rawAge = values.age as unknown;
-
-	const age = rawAge === '' || rawAge === undefined || rawAge === null ? undefined : Number(rawAge);
-
 	return {
 		market: values.market,
 		fullName: values.fullName ?? '',
 		email: values.email ?? '',
-		age: Number.isNaN(age) ? undefined : age,
-		sportPractice: values.sportPractice ?? '',
+		birthDate: values.birthDate ?? '',
+		phone: values.phone ?? '',
 		postalCode: values.postalCode ?? '',
 		addressLine1: values.addressLine1 ?? '',
 		number: values.number ?? '',
