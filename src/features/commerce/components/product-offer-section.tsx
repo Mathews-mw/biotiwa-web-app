@@ -1,26 +1,24 @@
 'use client';
 
 import Image from 'next/image';
-import { toast } from 'sonner';
 import { motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { IMarketCode } from '../types/commerce-entity-types';
 
 import { cn } from '@/lib/utils';
 import { formatMoney } from '../lib/format-money';
+import { useGetPublicOffersQuery } from '../hooks/use-commerce-queries';
 import { useTrackEvent } from '@/features/tracking/hooks/use-track-event';
-import { useAddCartItemMutation } from '@/features/cart/hooks/use-cart-queries';
-import { useCheckoutQuoteQuery, useGetPublicOffersQuery } from '../hooks/use-commerce-queries';
+import { buildCheckoutStartPath } from '@/features/checkout/lib/build-checkout-start-path';
 
 import { SummaryRow } from './summary-row';
 import { OfferOption } from './offer-option';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { OrderBumpOption } from './order-bump-option';
-import { buildCheckoutStartPath } from '@/features/checkout/lib/build-checkout-start-path';
+import { Separator } from '@/components/ui/separator';
 
 const availableMarkets = [
 	{
@@ -35,17 +33,25 @@ const availableMarkets = [
 	},
 ] as const;
 
+type OfferSummary = {
+	subtotal_amount: number;
+	discount_amount: number;
+	shipping_amount: number;
+	tax_amount: number;
+	total_amount: number;
+	currency: 'BRL' | 'USD';
+};
+
 export function ProductOfferSection() {
 	const router = useRouter();
 
 	const [selectedMarketCode, setSelectedMarketCode] = useState<IMarketCode>('BR');
-
-	const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
+	const [userSelectedOfferId, setUserSelectedOfferId] = useState<string | null>(null);
 	const [includeOrderBump, setIncludeOrderBump] = useState(false);
 
-	const { track } = useTrackEvent();
+	const trackedProductViewRef = useRef<string | null>(null);
 
-	const addCartItemMutation = useAddCartItemMutation();
+	const { track } = useTrackEvent();
 
 	const offersQuery = useGetPublicOffersQuery({
 		market: selectedMarketCode,
@@ -54,50 +60,68 @@ export function ProductOfferSection() {
 	const currentMarket = offersQuery.data?.market;
 	const product = offersQuery.data?.product;
 	const currentOrderBump = offersQuery.data?.order_bump ?? null;
+
 	const marketOffers = useMemo(() => {
 		return offersQuery.data?.offers ?? [];
 	}, [offersQuery.data?.offers]);
 
-	useEffect(() => {
-		if (!offersQuery.data) {
-			return;
-		}
-
-		const offerStillExists = offersQuery.data.offers.some((offer) => {
-			return offer.id === selectedOfferId;
-		});
-
-		if (offerStillExists) {
-			return;
-		}
-
-		const defaultOffer = offersQuery.data.offers.find((offer) => offer.is_highlighted) ?? offersQuery.data.offers[0];
-
-		setTimeout(() => setSelectedOfferId(defaultOffer?.id ?? null));
-	}, [offersQuery.data, selectedOfferId]);
-
-	const selectedOffer = useMemo(() => {
-		return marketOffers.find((offer) => offer.id === selectedOfferId) ?? null;
-	}, [marketOffers, selectedOfferId]);
-
-	const quoteInput = useMemo(() => {
-		if (!selectedOfferId) {
+	const activeOfferId = useMemo(() => {
+		if (marketOffers.length === 0) {
 			return null;
 		}
 
-		return {
-			market: selectedMarketCode,
-			offerId: selectedOfferId,
-			includeOrderBump,
-		};
-	}, [selectedMarketCode, selectedOfferId, includeOrderBump]);
+		const userOfferStillExists = marketOffers.some((offer) => offer.id === userSelectedOfferId);
 
-	const quoteQuery = useCheckoutQuoteQuery(quoteInput);
+		if (userOfferStillExists) {
+			return userSelectedOfferId;
+		}
+
+		const highlightedOffer = marketOffers.find((offer) => offer.is_highlighted);
+		return highlightedOffer?.id ?? marketOffers[0].id;
+	}, [marketOffers, userSelectedOfferId]);
+
+	const selectedOffer = useMemo(() => {
+		return marketOffers.find((offer) => offer.id === activeOfferId) ?? null;
+	}, [marketOffers, activeOfferId]);
+
+	const summary = useMemo<OfferSummary | null>(() => {
+		if (!currentMarket || !selectedOffer) {
+			return null;
+		}
+
+		const offerQuantity = selectedOffer.items.reduce((total, item) => {
+			return total + item.quantity;
+		}, 0);
+
+		const offerSubtotalAmount = selectedOffer.unit_amount * offerQuantity;
+
+		const orderBumpAmount =
+			includeOrderBump && currentOrderBump ? currentOrderBump.unit_amount * currentOrderBump.quantity : 0;
+
+		const subtotalAmount = offerSubtotalAmount + orderBumpAmount;
+
+		const discountAmount = Math.round(offerSubtotalAmount * (selectedOffer.discount_percent / 100));
+
+		const taxableAmount = subtotalAmount - discountAmount;
+		const taxRate = Number(currentMarket.tax_rate);
+		const taxAmount = Math.round(taxableAmount * taxRate);
+
+		const totalAmount = taxableAmount + currentMarket.shipping_amount + taxAmount;
+
+		return {
+			subtotal_amount: subtotalAmount,
+			discount_amount: discountAmount,
+			shipping_amount: currentMarket.shipping_amount,
+			tax_amount: taxAmount,
+			total_amount: totalAmount,
+			currency: currentMarket.currency,
+		};
+	}, [currentMarket, selectedOffer, includeOrderBump, currentOrderBump]);
 
 	function handleMarketChange(marketCode: IMarketCode) {
-		setSelectedMarketCode(marketCode);
-		setSelectedOfferId(null);
-		setIncludeOrderBump(false);
+		if (marketCode === selectedMarketCode) {
+			return;
+		}
 
 		track({
 			eventType: 'market_changed',
@@ -107,10 +131,14 @@ export function ProductOfferSection() {
 				nextMarket: marketCode,
 			},
 		});
+
+		setSelectedMarketCode(marketCode);
+		setUserSelectedOfferId(null);
+		setIncludeOrderBump(false);
 	}
 
-	async function handleGoToCheckout() {
-		if (!selectedOfferId || !selectedMarketCode) {
+	function handleGoToCheckout() {
+		if (!activeOfferId) {
 			return;
 		}
 
@@ -118,26 +146,33 @@ export function ProductOfferSection() {
 			eventType: 'checkout_started',
 			market: selectedMarketCode,
 			payload: {
-				offerId: selectedOfferId,
+				offerId: activeOfferId,
 				includeOrderBump,
-				totalAmount: quoteQuery.data?.summary.totalAmount,
-				currency: quoteQuery.data?.summary.currency,
+				totalAmount: summary?.total_amount,
+				currency: summary?.currency,
 			},
 		});
 
 		const checkoutStartPath = buildCheckoutStartPath({
 			marketCode: selectedMarketCode,
-			offerId: selectedOfferId,
+			offerId: activeOfferId,
 			orderBumpId: includeOrderBump && currentOrderBump ? currentOrderBump.id : null,
 		});
-
-		console.log('checkoutStartPath: ', checkoutStartPath);
 
 		router.push(checkoutStartPath);
 	}
 
+	// Tracking de view do produto
 	useEffect(() => {
-		if (!offersQuery.data) {
+		const product = offersQuery.data?.product;
+
+		if (!product) {
+			return;
+		}
+
+		const currentTrackingKey = `${selectedMarketCode}-${product.id}`;
+
+		if (trackedProductViewRef.current === currentTrackingKey) {
 			return;
 		}
 
@@ -145,39 +180,13 @@ export function ProductOfferSection() {
 			eventType: 'product_viewed',
 			market: selectedMarketCode,
 			payload: {
-				productId: offersQuery.data.product.id,
-				productSku: offersQuery.data.product.sku,
+				productId: product.id,
+				productSku: product.sku,
 			},
 		});
-	}, [offersQuery.data, selectedMarketCode]);
 
-	useEffect(() => {
-		if (marketOffers.length === 0) {
-			return;
-		}
-
-		const currentOfferStillExists = marketOffers.some((offer) => {
-			return offer.id === selectedOfferId;
-		});
-
-		if (currentOfferStillExists) {
-			return;
-		}
-
-		const highlightedOffer = marketOffers.find((offer) => {
-			return offer.is_highlighted;
-		});
-
-		const nextOfferId = highlightedOffer?.id ?? marketOffers[0].id;
-
-		const timeoutId = setTimeout(() => {
-			setSelectedOfferId(nextOfferId);
-		}, 0);
-
-		return () => {
-			clearTimeout(timeoutId);
-		};
-	}, [marketOffers, selectedOfferId]);
+		trackedProductViewRef.current = currentTrackingKey;
+	}, [offersQuery.data?.product, offersQuery.data?.product?.sku, selectedMarketCode, track]);
 
 	if (offersQuery.isLoading) {
 		return (
@@ -199,9 +208,9 @@ export function ProductOfferSection() {
 		);
 	}
 
-	const summary = quoteQuery.data?.summary;
 	const locale = currentMarket.locale;
 	const currency = currentMarket.currency;
+	const productImageUrl = product.image_url || '/images/product/acaipulse-bottle.png';
 
 	return (
 		<section id="oferta" className="relative overflow-hidden bg-[#100813] px-6 py-28 text-white lg:px-10 lg:py-40">
@@ -229,7 +238,7 @@ export function ProductOfferSection() {
 						<div className="bg-brand-violet/25 absolute inset-[12%] rounded-full blur-[90px]" />
 
 						<Image
-							src={product.image_url ?? ''}
+							src={productImageUrl}
 							alt={product.name}
 							fill
 							sizes="(max-width: 1024px) 80vw, 35vw"
@@ -248,7 +257,6 @@ export function ProductOfferSection() {
 					<div>
 						<p className="text-sm font-medium text-white/50">País de compra</p>
 
-						{/* Market options */}
 						<div className="mt-4 grid grid-cols-2 gap-3">
 							{availableMarkets.map((market) => {
 								const isSelected = market.code === selectedMarketCode;
@@ -266,7 +274,6 @@ export function ProductOfferSection() {
 										)}
 									>
 										<span className="block text-sm font-medium">{market.label}</span>
-
 										<span className="mt-1 block text-xs opacity-70">{market.currency}</span>
 									</button>
 								);
@@ -281,7 +288,7 @@ export function ProductOfferSection() {
 
 						<div className="mt-4 grid gap-4">
 							{marketOffers.map((offer) => {
-								const isSelected = selectedOffer?.id === offer.id;
+								const isSelected = activeOfferId === offer.id;
 
 								return (
 									<OfferOption
@@ -291,7 +298,7 @@ export function ProductOfferSection() {
 										selectedMarketCode={currentMarket.code}
 										currency={currency}
 										locale={locale}
-										onSetSelectedOfferId={(offerId) => setSelectedOfferId(offerId)}
+										onSetSelectedOfferId={setUserSelectedOfferId}
 									/>
 								);
 							})}
@@ -333,7 +340,7 @@ export function ProductOfferSection() {
 					<div className="rounded-3xl bg-[#09050b]/55 p-5">
 						<h3 className="text-lg font-medium">Resumo do pedido</h3>
 
-						{quoteQuery.isLoading || !summary ? (
+						{!summary ? (
 							<p className="mt-5 text-sm text-white/45">Calculando resumo...</p>
 						) : (
 							<>
@@ -341,25 +348,27 @@ export function ProductOfferSection() {
 									<SummaryRow
 										label="Subtotal"
 										value={formatMoney({
-											amount: summary.subtotalAmount,
+											amount: summary.subtotal_amount,
 											currency,
 											locale,
 										})}
 									/>
 
-									<SummaryRow
-										label="Desconto"
-										value={`- ${formatMoney({
-											amount: summary.discountAmount,
-											currency,
-											locale,
-										})}`}
-									/>
+									{summary.discount_amount > 0 ? (
+										<SummaryRow
+											label="Desconto"
+											value={`- ${formatMoney({
+												amount: summary.discount_amount,
+												currency,
+												locale,
+											})}`}
+										/>
+									) : null}
 
 									<SummaryRow
 										label="Frete estimado"
 										value={formatMoney({
-											amount: summary.shippingAmount,
+											amount: summary.shipping_amount,
 											currency,
 											locale,
 										})}
@@ -368,7 +377,7 @@ export function ProductOfferSection() {
 									<SummaryRow
 										label="Imposto estimado"
 										value={formatMoney({
-											amount: summary.taxAmount,
+											amount: summary.tax_amount,
 											currency,
 											locale,
 										})}
@@ -381,7 +390,7 @@ export function ProductOfferSection() {
 
 										<span className="text-brand-gold text-3xl font-semibold tracking-[-0.04em]">
 											{formatMoney({
-												amount: summary.totalAmount,
+												amount: summary.total_amount,
 												currency,
 												locale,
 											})}
@@ -391,17 +400,17 @@ export function ProductOfferSection() {
 
 								<Button
 									size="lg"
-									disabled={!selectedOfferId || quoteQuery.isFetching || addCartItemMutation.isPending}
+									disabled={!activeOfferId || !summary}
 									className="mt-7 w-full rounded-full bg-[#f5efe4] text-[#16091f] hover:bg-white"
 									onClick={handleGoToCheckout}
 								>
-									{addCartItemMutation.isPending ? 'Salvando carrinho...' : 'Continuar para checkout'}
+									Continuar para checkout
 								</Button>
 							</>
 						)}
 
 						<p className="mt-4 text-center text-xs leading-5 text-white/35">
-							Valores provisórios para demonstração. A confirmação final ocorrerá no checkout.
+							Valores estimados. A confirmação final ocorrerá no checkout.
 						</p>
 					</div>
 				</motion.div>

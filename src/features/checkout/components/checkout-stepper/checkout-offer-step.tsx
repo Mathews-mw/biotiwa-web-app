@@ -1,4 +1,5 @@
-import type { IMarketCode } from '@/features/commerce/types/commerce-entity-types';
+import type { ICheckoutQuote } from '../../types/checkout.types';
+import type { ICartDetails } from '@/features/cart/types/cart-entities.types';
 
 import { Card } from '@/components/ui/card';
 import { CheckoutOfferEditor } from '../checkout-offer-editor';
@@ -6,12 +7,13 @@ import { CheckoutOfferEditor } from '../checkout-offer-editor';
 import { ClipboardCheck } from 'lucide-react';
 
 type CheckoutOfferStepProps = {
-	marketCode: IMarketCode;
+	cart: ICartDetails;
+	quote: ICheckoutQuote;
 	selectedOfferId: string;
 	includeOrderBump: boolean;
 };
 
-export function CheckoutOfferStep({ marketCode, selectedOfferId, includeOrderBump }: CheckoutOfferStepProps) {
+export function CheckoutOfferStep({ selectedOfferId, cart, quote, includeOrderBump }: CheckoutOfferStepProps) {
 	return (
 		<div className="grid gap-5">
 			<Card className="border-white/10 bg-white/4 p-6 text-white">
@@ -32,7 +34,7 @@ export function CheckoutOfferStep({ marketCode, selectedOfferId, includeOrderBum
 			</Card>
 
 			<CheckoutOfferEditor
-				marketCode={marketCode}
+				marketCode={quote.market_code}
 				selectedOfferId={selectedOfferId}
 				includeOrderBump={includeOrderBump}
 			/>

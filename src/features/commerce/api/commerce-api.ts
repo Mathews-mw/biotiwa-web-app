@@ -1,16 +1,7 @@
 import { calculateOrderSummary } from '../lib/calculate-order-summary';
 import { getPublicOffersRequest } from '../http-requests/get-public-offers.request';
 
-import type {
-	ICheckoutQuoteInput,
-	ICheckoutQuoteResponse,
-	ICreateCheckoutSessionInput,
-	ICreateCheckoutSessionResponse,
-} from './commerce-api-types';
-
-function sleep(ms: number) {
-	return new Promise((resolve) => setTimeout(resolve, ms));
-}
+import type { ICheckoutQuoteInput, ICheckoutQuoteResponse } from './commerce-api-types';
 
 export async function getCheckoutQuote(input: ICheckoutQuoteInput): Promise<ICheckoutQuoteResponse> {
 	const publicOffers = await getPublicOffersRequest({
@@ -39,26 +30,5 @@ export async function getCheckoutQuote(input: ICheckoutQuoteInput): Promise<IChe
 		offer,
 		orderBump,
 		summary,
-	};
-}
-
-export async function createCheckoutSession(
-	input: ICreateCheckoutSessionInput
-): Promise<ICreateCheckoutSessionResponse> {
-	await sleep(700);
-
-	const quote = await getCheckoutQuote(input);
-
-	const previewOrderId = crypto.randomUUID();
-
-	console.log('Mock checkout session created', {
-		previewOrderId,
-		input,
-		quote,
-	});
-
-	return {
-		previewOrderId,
-		checkoutUrl: `/success?preview=1&order=${previewOrderId}`,
 	};
 }
