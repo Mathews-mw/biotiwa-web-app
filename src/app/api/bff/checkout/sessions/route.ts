@@ -16,6 +16,6 @@ export async function POST(request: NextRequest) {
 		request,
 		apiPath: '/checkout/sessions',
 		method: 'POST',
-		body: {},
+		body: null,
 	});
 }

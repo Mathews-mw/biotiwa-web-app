@@ -1,6 +1,6 @@
 import { Separator } from '@/components/ui/separator';
 
-import type { ICheckoutQuote } from '../types/checkout-types';
+import type { ICheckoutQuote } from '../types/checkout.types';
 
 import { formatMoney } from '@/features/commerce/lib/format-money';
 

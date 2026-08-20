@@ -1,5 +1,5 @@
 import { clientApi } from '@/lib/http/client-api';
-import { ICheckoutQuote } from '../types/checkout-types';
+import { ICheckoutQuote } from '../types/checkout.types';
 
 interface IResponse {
 	quote: ICheckoutQuote;

@@ -1,5 +1,6 @@
 import type { ICartItemType } from '@/features/cart/types/cart-entities.types';
-import type { ICurrencyCode, IMarketCode } from '@/features/commerce/types/commerce-entity-types';
+import type { IPaymentProvider, IPaymentStatus } from '@/features/payment/types/payment.types';
+import type { ICurrencyCode, IMarketCode, IProduct } from '@/features/commerce/types/commerce-entity-types';
 
 export type IOrderItemType = 'OFFER_ITEM' | 'PRODUCT' | 'ORDER_BUMP';
 
@@ -49,7 +50,26 @@ export interface ICheckoutSession {
 	currency: ICurrencyCode;
 	payment_url?: string | null;
 	payment_provider?: string | null;
+	provider_session_id?: string | null;
+	provider_payment_intent?: string | null;
 	created_at: Date;
+	order: IOrderDetails;
+}
+
+export interface ICheckoutSessionStatus {
+	provider_session_id?: string | null;
+	payment_provider: IPaymentProvider;
+	payment_status: IPaymentStatus;
+	order_id: string;
+	order_status: IOrderStatus;
+	currency: ICurrencyCode;
+	amount: number;
+	is_paid: boolean;
+	is_pending: boolean;
+	is_failed: boolean;
+	is_expired: boolean;
+	created_at: Date;
+	updated_at?: Date | null;
 	order: IOrderDetails;
 }
 
@@ -86,6 +106,10 @@ export interface IOrderItem {
 	created_at: Date;
 }
 
+export interface IOrderItemDetails extends IOrderItem {
+	product?: IProduct | null;
+}
+
 export interface IOrderDetails extends IOrder {
-	items: Array<IOrderItem>;
+	items: Array<IOrderItemDetails>;
 }

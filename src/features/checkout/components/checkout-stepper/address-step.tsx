@@ -1,6 +1,6 @@
 import { UseFormReturn } from 'react-hook-form';
 
-import type { ICheckoutQuote } from '../../types/checkout-types';
+import type { ICheckoutQuote } from '../../types/checkout.types';
 import type { ICheckoutFormInput } from '../../schemas/checkout-schema';
 
 import { Field } from '@/components/field';

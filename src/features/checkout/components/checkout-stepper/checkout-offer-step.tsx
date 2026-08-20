@@ -1,4 +1,4 @@
-import type { ICheckoutQuote } from '../../types/checkout-types';
+import type { ICheckoutQuote } from '../../types/checkout.types';
 import type { ICartDetails } from '@/features/cart/types/cart-entities.types';
 
 import { Card } from '@/components/ui/card';

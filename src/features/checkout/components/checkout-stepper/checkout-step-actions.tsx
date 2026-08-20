@@ -1,5 +1,7 @@
 import { Button } from '@/components/ui/button';
 
+import { Loader2 } from 'lucide-react';
+
 type CheckoutStepActionsProps = {
 	currentStepIndex: number;
 	totalSteps: number;
@@ -23,8 +25,8 @@ export function CheckoutStepActions({
 			<Button
 				type="button"
 				variant="outline"
-				disabled={isFirstStep || isSubmitting}
 				onClick={onPrevious}
+				disabled={isFirstStep || isSubmitting}
 				className="rounded-full border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white"
 			>
 				Voltar
@@ -37,14 +39,15 @@ export function CheckoutStepActions({
 					disabled={isSubmitting}
 					className="rounded-full bg-[#f5efe4] text-[#16091f] hover:bg-white"
 				>
-					{isSubmitting ? 'Preparando pagamento...' : 'Continuar para pagamento'}
+					{isSubmitting && <Loader2 className="animate-spin" />}
+					{isSubmitting ? 'Redirecionando...' : 'Ir para pagamento'}
 				</Button>
 			) : (
 				<Button
 					type="button"
 					size="lg"
+					onClick={onNext}
 					disabled={isSubmitting}
-					onClick={() => void onNext()}
 					className="rounded-full bg-[#f5efe4] text-[#16091f] hover:bg-white"
 				>
 					Continuar

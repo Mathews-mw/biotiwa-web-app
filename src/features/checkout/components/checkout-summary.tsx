@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { product } from '@/features/commerce/data/mock-catalog';
 import { formatMoney } from '@/features/commerce/lib/format-money';
 
-import type { ICheckoutQuote } from '../types/checkout-types';
+import type { ICheckoutQuote } from '../types/checkout.types';
 
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
