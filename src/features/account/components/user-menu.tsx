@@ -19,7 +19,7 @@ import {
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-import { Loader2, LogOut, ShoppingBag, UserRound } from 'lucide-react';
+import { Loader2, LogOut, Package, ShoppingBag, UserRound } from 'lucide-react';
 import { useMemo } from 'react';
 
 export function UserMenu() {
@@ -112,6 +112,13 @@ export function UserMenu() {
 					<Link href="/account/profile">
 						<UserRound className="size-4" />
 						Minha conta
+					</Link>
+				</DropdownMenuItem>
+
+				<DropdownMenuItem asChild className="cursor-pointer">
+					<Link href="/account/orders">
+						<Package className="size-4" />
+						Meus pedidos
 					</Link>
 				</DropdownMenuItem>
 

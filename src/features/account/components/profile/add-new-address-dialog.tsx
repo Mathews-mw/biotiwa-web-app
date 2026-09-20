@@ -31,12 +31,14 @@ import {
 
 import { Loader2 } from 'lucide-react';
 import { IconMapPinPlus } from '@tabler/icons-react';
+import { twMerge } from 'tailwind-merge';
 
 interface IProps {
 	userId: string;
+	isMainTheme?: boolean;
 }
 
-export function AddNewAddressDialog({ userId }: IProps) {
+export function AddNewAddressDialog({ userId, isMainTheme = false }: IProps) {
 	const {
 		handleSubmit,
 		register,
@@ -72,8 +74,6 @@ export function AddNewAddressDialog({ userId }: IProps) {
 	});
 
 	async function handleRegisterAddress(data: IRegisterAddressFormInput) {
-		console.log('call form action');
-
 		if (!cepInputValue) {
 			return setSearchCepErrorMessage('Por favor, preencha o CEP.');
 		} else {
@@ -141,15 +141,20 @@ export function AddNewAddressDialog({ userId }: IProps) {
 	return (
 		<Dialog modal open={isOpen} onOpenChange={setIsOpen}>
 			<DialogTrigger asChild>
-				<Button size="sm" variant="outline">
+				<Button size="sm" variant={isMainTheme ? 'secondary' : 'outline'}>
 					<IconMapPinPlus className="text-brand-acai" /> Novo endereço
 				</Button>
 			</DialogTrigger>
 
-			<DialogContent className="w-full max-w-[95%] rounded-lg lg:w-min lg:min-w-160">
+			<DialogContent
+				className={twMerge([
+					'w-full max-w-[95%] rounded-lg lg:w-min lg:min-w-160',
+					isMainTheme ? 'bg-jaguar text-white' : '',
+				])}
+			>
 				<DialogHeader>
 					<div className="flex items-center gap-2">
-						<IconMapPinPlus className="text-brand-acai" />
+						<IconMapPinPlus className={twMerge(['text-brand-acai', isMainTheme ? 'text-brand-gold' : ''])} />
 						<DialogTitle>Cadastrar novo endereço de entrega</DialogTitle>
 					</div>
 
@@ -176,7 +181,7 @@ export function AddNewAddressDialog({ userId }: IProps) {
 							/>
 							<Button
 								type="button"
-								variant="outline"
+								variant={isMainTheme ? 'secondary' : 'outline'}
 								onClick={searchCep}
 								disabled={isSearchCep || isSubmitting || isPending}
 								className="flex items-center justify-center gap-1.5"

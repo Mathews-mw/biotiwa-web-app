@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, type FieldPath } from 'react-hook-form';
+import { useForm, useWatch, type FieldPath } from 'react-hook-form';
 
 import { checkoutSchema, type ICheckoutFormData, type ICheckoutFormInput } from '../schemas/checkout-schema';
 
@@ -16,7 +16,7 @@ import { useSessionQuery } from '@/features/auth/hooks/use-auth-queries';
 import { useTrackEvent } from '@/features/tracking/hooks/use-track-event';
 import { useGetActiveCartQuery } from '@/features/cart/hooks/use-cart-queries';
 import { CheckoutStepper, type CheckoutStep } from './checkout-stepper/checkout-stepper';
-import { useCheckoutQuoteQuery, useCreateCheckoutSessionMutation } from '../hooks/use-checkout-queries';
+import { useCalculateCheckoutSummaryQuery, useCreateCheckoutSessionMutation } from '../hooks/use-checkout-queries';
 
 import { ReviewStep } from './checkout-stepper/review-step';
 import { CheckoutSummaryCard } from './checkout-summary-card';
@@ -25,6 +25,7 @@ import { CheckoutDraftStatus } from './checkout-draft-status';
 import { CheckoutStateMessage } from './checkout-state-message';
 import { CustomerStep } from './checkout-stepper/customer-step';
 import { CheckoutOfferStep } from './checkout-stepper/checkout-offer-step';
+import { ShippingStep } from './checkout-stepper/shipping-step/shipping-step';
 import { CheckoutStepActions } from './checkout-stepper/checkout-step-actions';
 
 import { ArrowLeft } from 'lucide-react';
@@ -44,6 +45,11 @@ const checkoutSteps: CheckoutStep[] = [
 		id: 'address',
 		title: 'Entrega',
 		description: 'Endereço de envio.',
+	},
+	{
+		id: 'shipping',
+		title: 'Frete',
+		description: 'Cotação do frete',
 	},
 	{
 		id: 'review',
@@ -69,12 +75,6 @@ export function CheckoutScreen() {
 	const cart = activeCartQuery.data?.cart ?? null;
 	const cartHasItems = Boolean(cart && cart.items.length > 0);
 
-	const quoteQuery = useCheckoutQuoteQuery({
-		enabled: isAuthenticated && cartHasItems,
-	});
-
-	const quote = quoteQuery.data?.quote ?? null;
-
 	const createCheckoutSessionMutation = useCreateCheckoutSessionMutation();
 
 	const { track } = useTrackEvent();
@@ -88,6 +88,7 @@ export function CheckoutScreen() {
 			email: '',
 			birthDate: '',
 			phone: '',
+			selectedAddressId: '',
 			postalCode: '',
 			addressLine1: '',
 			number: '',
@@ -95,9 +96,24 @@ export function CheckoutScreen() {
 			district: '',
 			city: '',
 			state: '',
+			shippingRateId: '',
 			acceptPrivacy: false,
 		},
 	});
+
+	const shippingRateId = useWatch({
+		control: form.control,
+		name: 'shippingRateId',
+	});
+
+	const checkoutSummaryQuery = useCalculateCheckoutSummaryQuery(
+		{
+			enabled: isAuthenticated && cartHasItems,
+		},
+		{ cartId: cart?.id, shippingRateId: shippingRateId || undefined }
+	);
+
+	const checkoutSummary = checkoutSummaryQuery.data ?? null;
 
 	const checkoutDraft = useCheckoutDraft({
 		form,
@@ -140,17 +156,15 @@ export function CheckoutScreen() {
 	}, [user, form]);
 
 	useEffect(() => {
-		const marketCode = quote?.market_code ?? cart?.market_code;
-
-		if (!marketCode) {
+		if (!cart?.market_code) {
 			return;
 		}
 
-		form.setValue('market', marketCode, {
+		form.setValue('market', cart.market_code, {
 			shouldValidate: true,
 			shouldDirty: false,
 		});
-	}, [quote?.market_code, cart?.market_code, form]);
+	}, [cart?.market_code, form]);
 
 	if (activeCartQuery.isLoading) {
 		return (
@@ -161,7 +175,7 @@ export function CheckoutScreen() {
 		);
 	}
 
-	if (activeCartQuery.isError) {
+	if (activeCartQuery.isError && !checkoutSummary) {
 		return (
 			<CheckoutStateMessage
 				title="Não foi possível carregar seu carrinho"
@@ -183,7 +197,7 @@ export function CheckoutScreen() {
 		);
 	}
 
-	if (quoteQuery.isLoading || !quote) {
+	if (checkoutSummaryQuery.isLoading || !checkoutSummary) {
 		return (
 			<CheckoutStateMessage
 				title="Preparando seu checkout"
@@ -192,7 +206,12 @@ export function CheckoutScreen() {
 		);
 	}
 
-	if (quoteQuery.isError) {
+	if (checkoutSummaryQuery.isPending && !checkoutSummary) {
+		// full screen loading
+		return <div>Fullscreen loading...</div>;
+	}
+
+	if (checkoutSummaryQuery.isError) {
 		return (
 			<CheckoutStateMessage
 				title="Não foi possível calcular o pedido"
@@ -203,7 +222,7 @@ export function CheckoutScreen() {
 		);
 	}
 
-	const isBrazil = quote.market_code === 'BR';
+	const isBrazil = cart.market_code === 'BR';
 	const currentStep = checkoutSteps[currentStepIndex];
 
 	const selectedOfferItem = cart.items.find((item) => {
@@ -217,28 +236,49 @@ export function CheckoutScreen() {
 	const selectedOfferId = selectedOfferItem?.offer?.id ?? null;
 	const includeOrderBump = Boolean(selectedOrderBumpItem);
 
-	/*
-	 * O formulário não é enviado para a API, porque o endpoint atual POST /checkout/sessions cria o pedido somente a partir do carrinho ativo.
-	 * Quando entrarmos em endereço/cliente no pedido, aí o endpoint pode passar a receber customer e shipping_address */
-	async function handleSubmit(_data: ICheckoutFormData) {
-		if (!quote) {
+	async function handleSubmit(data: ICheckoutFormData) {
+		if (!cart || !checkoutSummary) {
+			return;
+		}
+
+		if (!data.shippingRateId) {
+			toast.error('Selecione uma opção de entrega.');
 			return;
 		}
 
 		try {
 			track({
 				eventType: 'checkout_submitted',
-				market: quote.market_code,
+				market: cart.market_code,
 				payload: {
-					cartId: quote.cart_id,
-					totalAmount: quote.summary.total_amount,
-					currency: quote.summary.currency,
-					itemsCount: quote.items.length,
+					cartId: cart.id,
+					totalAmount: checkoutSummary.total_amount,
+					currency: checkoutSummary.currency,
+					itemsCount: cart.items.length,
 					hasOrderBump: includeOrderBump,
 				},
 			});
 
-			const checkoutSessionResult = await createCheckoutSessionMutation.mutateAsync();
+			const checkoutSessionResult = await createCheckoutSessionMutation.mutateAsync({
+				customer: {
+					name: data.fullName,
+					email: data.email,
+					phone: data.phone,
+					document: user?.profile.document ?? undefined,
+					birthDate: data.birthDate,
+				},
+				shippingAddress: {
+					zipCode: data.postalCode,
+					street: data.addressLine1,
+					number: data.number,
+					complement: data.addressLine2,
+					district: data.district,
+					city: data.city,
+					state: data.state,
+					countryCode: cart.market_code,
+				},
+				shippingRateId: data.shippingRateId,
+			});
 
 			if (checkoutSessionResult.payment_url) {
 				window.location.assign(checkoutSessionResult.payment_url);
@@ -321,22 +361,25 @@ export function CheckoutScreen() {
 							/>
 						</div>
 
-						<form onSubmit={form.handleSubmit(handleSubmit)} className="mt-8 grid gap-8" data-clarity-mask="true">
+						<form onSubmit={form.handleSubmit(handleSubmit)} data-clarity-mask="true" className="mt-8 grid gap-8">
 							{currentStep.id === 'offer' && selectedOfferId ? (
 								<CheckoutOfferStep
-									cart={cart}
-									quote={quote}
 									selectedOfferId={selectedOfferId}
 									includeOrderBump={includeOrderBump}
+									marketCode={cart.market_code}
 								/>
 							) : null}
 
 							{currentStep.id === 'customer' ? <CustomerStep form={form} /> : null}
 
-							{currentStep.id === 'address' ? <AddressStep form={form} isBrazil={isBrazil} quote={quote} /> : null}
+							{currentStep.id === 'address' ? (
+								<AddressStep userId={user?.id} form={form} marketCode={cart.market_code} />
+							) : null}
+
+							{currentStep.id === 'shipping' ? <ShippingStep form={form} /> : null}
 
 							{currentStep.id === 'review' ? (
-								<ReviewStep form={form} quote={quote} cart={cart} isBrazil={isBrazil} />
+								<ReviewStep form={form} cart={cart} summary={checkoutSummary} isBrazil={isBrazil} />
 							) : null}
 
 							{createCheckoutSessionMutation.isError ? (
@@ -356,7 +399,7 @@ export function CheckoutScreen() {
 					</section>
 
 					<aside className="lg:sticky lg:top-8 lg:block">
-						<CheckoutSummaryCard quote={quote} />
+						<CheckoutSummaryCard summary={checkoutSummary} />
 					</aside>
 				</div>
 			</div>
@@ -373,6 +416,10 @@ function getFieldsForStep(stepId: CheckoutStep['id'], isBrazil: boolean): FieldP
 		return isBrazil
 			? ['postalCode', 'addressLine1', 'number', 'district', 'city', 'state']
 			: ['postalCode', 'addressLine1', 'city', 'state'];
+	}
+
+	if (stepId === 'shipping') {
+		return ['shippingRateId'];
 	}
 
 	if (stepId === 'review') {

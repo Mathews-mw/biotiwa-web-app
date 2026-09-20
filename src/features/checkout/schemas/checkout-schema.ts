@@ -9,6 +9,7 @@ export const checkoutSchema = z
 		birthDate: z.string().refine((value) => /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/([0-9]{4})$/.test(value), {
 			message: 'Por favor, preencha uma data válida',
 		}),
+		selectedAddressId: z.string().min(1, 'Selecione um endereço de entrega'),
 		postalCode: z.string().min(5, 'Informe o CEP/ZIP code.').max(12, 'CEP/ZIP code inválido.'),
 		addressLine1: z.string().min(3, 'Informe o endereço.').max(160, 'Endereço muito longo.'),
 		number: z.string().max(20, 'Número muito longo.').optional(),
@@ -16,6 +17,7 @@ export const checkoutSchema = z
 		district: z.string().max(80, 'Bairro muito longo.').optional(),
 		city: z.string().min(2, 'Informe a cidade.').max(80, 'Cidade muito longa.'),
 		state: z.string().min(2, 'Informe o estado.').max(40, 'Estado muito longo.'),
+		shippingRateId: z.string().min(1, 'Selecione uma opção de entrega'),
 		acceptPrivacy: z.boolean().refine((value) => value === true, {
 			message: 'Você precisa aceitar os termos e a política de privacidade.',
 		}),

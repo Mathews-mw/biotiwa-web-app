@@ -10,6 +10,7 @@ import { QueryProvider } from '@/providers/query-provider';
 import { ConsentProvider } from '@/features/consent/context/consent-provider';
 import { CartSessionSync } from '@/features/cart/components/cart-session-sync';
 import { AuthSessionProvider } from '@/features/auth/context/auth-session-provider';
+import { DateProvider } from '@/providers/date-provider';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -39,13 +40,15 @@ export default function RootLayout({
 			className={cn('h-full', 'antialiased', geistSans.variable, geistMono.variable, 'font-sans', inter.variable)}
 		>
 			<body className="flex min-h-full flex-col">
-				<QueryProvider>
-					<AuthSessionProvider>
-						<CartSessionSync />
-						{/* <ConsentProvider>{children}</ConsentProvider> */}
-						{children}
-					</AuthSessionProvider>
-				</QueryProvider>
+				<DateProvider>
+					<QueryProvider>
+						<AuthSessionProvider>
+							<CartSessionSync />
+							{/* <ConsentProvider>{children}</ConsentProvider> */}
+							{children}
+						</AuthSessionProvider>
+					</QueryProvider>
+				</DateProvider>
 
 				<Toaster richColors />
 			</body>
