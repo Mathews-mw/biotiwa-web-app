@@ -11,8 +11,6 @@ type RouteParams = {
 export async function GET(request: NextRequest, { params }: RouteParams) {
 	const { providerSessionId } = await params;
 
-	console.log('providerSessionId: ', providerSessionId);
-
 	return proxyApiRequest({
 		request,
 		apiPath: `/checkout/sessions/${providerSessionId}`,

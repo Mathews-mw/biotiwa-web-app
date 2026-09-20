@@ -1,8 +1,8 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
 
 import { checkoutQueryKeys } from '../query-keys/checkout-query-keys';
-import { createCheckoutQuoteRequest } from '../http-requests/create-checkout-quote.request';
 import { createCheckoutSessionRequest } from '../http-requests/create-checkout-session.request';
+import { calculateCheckoutSummaryRequest } from '../http-requests/calculate-checkout-summary.request';
 import { getCheckoutSessionStatusRequest } from '../http-requests/get-checkout-session-status.request';
 
 type UseCheckoutSessionStatusQueryParams = {
@@ -11,11 +11,15 @@ type UseCheckoutSessionStatusQueryParams = {
 
 const REFETCH_INTERVAL_IN_MS = 2 * 1000; // 2 seconds
 
-export function useCheckoutQuoteQuery(options?: { enabled?: boolean }) {
+export function useCalculateCheckoutSummaryQuery(
+	options?: { enabled?: boolean },
+	params?: { cartId?: string; shippingRateId?: string }
+) {
 	return useQuery({
-		queryKey: checkoutQueryKeys.quote(),
-		queryFn: createCheckoutQuoteRequest,
+		queryKey: checkoutQueryKeys.summary(params?.cartId, params?.shippingRateId),
+		queryFn: async () => calculateCheckoutSummaryRequest({ shippingRateId: params?.shippingRateId }),
 		enabled: options?.enabled ?? true,
+		placeholderData: keepPreviousData,
 		staleTime: 1000 * 15, // 15 seconds
 		retry: false,
 	});

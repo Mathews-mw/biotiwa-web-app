@@ -1,106 +1,185 @@
-import { UseFormReturn } from 'react-hook-form';
+import { useCallback, useEffect, useMemo } from 'react';
+import { UseFormReturn, useWatch } from 'react-hook-form';
 
-import type { ICheckoutQuote } from '../../types/checkout.types';
+import type { IAddress } from '@/features/account/types/address.types';
 import type { ICheckoutFormInput } from '../../schemas/checkout-schema';
+import type { IMarketCode } from '@/features/commerce/types/commerce-entity-types';
 
-import { Field } from '@/components/field';
+import { useGetUserAddresses } from '@/features/account/hooks/use-address-queries';
+
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Field, FieldContent, FieldLabel, FieldTitle } from '@/components/ui/field';
+import { AddNewAddressDialog } from '@/features/account/components/profile/add-new-address-dialog';
 
 import { MapPinned } from 'lucide-react';
 
 type AddressStepProps = {
+	userId?: string;
 	form: UseFormReturn<ICheckoutFormInput>;
-	quote: ICheckoutQuote;
-	isBrazil: boolean;
+	marketCode: IMarketCode;
+	// quote: ICheckoutQuote;
 };
 
-export function AddressStep({ form, isBrazil, quote }: AddressStepProps) {
-	const marketLAbel = quote.market_code === 'BR' ? 'Brasil' : 'United States';
+export function AddressStep({ userId, form, marketCode }: AddressStepProps) {
+	const marketLAbel = marketCode === 'BR' ? 'Brasil' : 'United States';
+
+	const { data: userAddressesData, isLoading: isLoadingAddresses } = useGetUserAddresses({ userId });
+
+	const selectedAddressId = useWatch({
+		control: form.control,
+		name: 'selectedAddressId',
+	});
+
+	// Filtrar os endereços do usuário com base no mercado selecionado
+	const availableAddresses = useMemo(() => {
+		return (
+			userAddressesData?.filter((address) => {
+				return address.market === marketCode;
+			}) ?? []
+		);
+	}, [userAddressesData, marketCode]);
+
+	const fillFormWithAddress = useCallback(
+		(address: IAddress) => {
+			form.setValue('selectedAddressId', address.id, {
+				shouldDirty: true,
+				shouldValidate: true,
+			});
+			form.setValue('postalCode', address.postal_code, {
+				shouldDirty: true,
+				shouldValidate: true,
+			});
+			form.setValue('addressLine1', address.address_line_1, {
+				shouldDirty: true,
+				shouldValidate: true,
+			});
+			form.setValue('number', address.number ?? '', {
+				shouldDirty: true,
+				shouldValidate: true,
+			});
+			form.setValue('addressLine2', address.address_line_2 ?? '', {
+				shouldDirty: true,
+				shouldValidate: true,
+			});
+			form.setValue('district', address.district ?? '', {
+				shouldDirty: true,
+				shouldValidate: true,
+			});
+			form.setValue('city', address.city, {
+				shouldDirty: true,
+				shouldValidate: true,
+			});
+			form.setValue('state', address.state, {
+				shouldDirty: true,
+				shouldValidate: true,
+			});
+		},
+		[form]
+	);
+
+	const handleSelectAddressChange = useCallback(
+		(addressId: string) => {
+			const selectedAddress = availableAddresses.find((address) => {
+				return address.id === addressId;
+			});
+
+			if (!selectedAddress) {
+				return;
+			}
+
+			fillFormWithAddress(selectedAddress);
+			form.setValue('shippingRateId', '', { shouldDirty: true, shouldValidate: true });
+		},
+		[availableAddresses, fillFormWithAddress]
+	);
+
+	useEffect(() => {
+		if (selectedAddressId) {
+			return;
+		}
+
+		const defaultAddress = availableAddresses.find((address) => address.is_default) ?? availableAddresses[0];
+
+		if (!defaultAddress) {
+			return;
+		}
+
+		fillFormWithAddress(defaultAddress);
+	}, [availableAddresses, selectedAddressId, fillFormWithAddress]);
 
 	return (
-		<Card className="border-white/10 bg-white/4 p-6 text-white">
-			<div className="flex items-start gap-4">
-				<div className="bg-brand-gold/15 text-brand-gold flex size-10 shrink-0 items-center justify-center rounded-full">
-					<MapPinned className="size-5" />
+		<div className="space-y-4">
+			<Card className="border-white/10 bg-white/4 p-6 text-white">
+				<div className="flex items-start gap-4">
+					<div className="bg-brand-gold/15 text-brand-gold flex size-10 shrink-0 items-center justify-center rounded-full">
+						<MapPinned className="size-5" />
+					</div>
+
+					<div className="flex w-full justify-between">
+						<div>
+							<h2 className="text-xl font-medium">Endereço de entrega</h2>
+
+							<p className="mt-2 text-sm leading-6 text-white/45">
+								Mercado selecionado: <span className="font-medium text-white">{marketLAbel}</span>
+							</p>
+
+							<p className="text-sm">
+								Por favor, selecione um endereço de entrega ou adicione um novo endereço para prosseguir com a
+								finalização da compra.
+							</p>
+						</div>
+
+						{userId && <AddNewAddressDialog userId={userId} isMainTheme />}
+					</div>
 				</div>
 
-				<div>
-					<h2 className="text-xl font-medium">Endereço de entrega</h2>
+				{isLoadingAddresses && <p className="mt-6 text-sm text-white/50">Carregando seus endereços...</p>}
 
-					<p className="mt-2 text-sm leading-6 text-white/45">
-						Mercado selecionado: <span className="font-medium text-white">{marketLAbel}</span>
-					</p>
-				</div>
-			</div>
+				{!isLoadingAddresses && availableAddresses.length === 0 && (
+					<div className="mt-6 rounded-2xl border border-dashed border-white/15 bg-white/5 p-5">
+						<p className="text-sm font-medium text-white">Nenhum endereço cadastrado para este mercado.</p>
 
-			<div className="mt-7 grid gap-5 sm:grid-cols-2">
-				<Field label={isBrazil ? 'CEP' : 'ZIP code'} error={form.formState.errors.postalCode?.message}>
-					<Input
-						placeholder={isBrazil ? '00000-000' : '00000'}
-						className="border-white/10 bg-white/5 text-white placeholder:text-white/25"
-						{...form.register('postalCode')}
-					/>
-				</Field>
+						<p className="mt-2 text-sm text-white/50">Adicione um endereço de entrega para continuar com a compra.</p>
+					</div>
+				)}
 
-				<Field label={isBrazil ? 'Estado' : 'State'} error={form.formState.errors.state?.message}>
-					<Input
-						placeholder={isBrazil ? 'AM' : 'FL'}
-						className="border-white/10 bg-white/5 text-white placeholder:text-white/25"
-						{...form.register('state')}
-					/>
-				</Field>
+				{availableAddresses.length > 0 && (
+					<RadioGroup value={selectedAddressId} onValueChange={handleSelectAddressChange}>
+						{availableAddresses.map((address) => {
+							return (
+								<FieldLabel
+									key={address.id}
+									htmlFor={address.id}
+									className="hover:bg-primary/10 border border-zinc-500/30"
+								>
+									<Field orientation="horizontal">
+										<FieldContent>
+											<FieldTitle>{address.address_line_1}</FieldTitle>
 
-				<Field
-					label={isBrazil ? 'Endereço' : 'Address line 1'}
-					error={form.formState.errors.addressLine1?.message}
-					className="sm:col-span-2"
-				>
-					<Input
-						placeholder={isBrazil ? 'Rua, avenida ou logradouro' : 'Street address'}
-						className="border-white/10 bg-white/5 text-white placeholder:text-white/25"
-						{...form.register('addressLine1')}
-					/>
-				</Field>
+											<div className="space-y-1 text-sm">
+												{address.number && <p>Número: {address.number}</p>}
 
-				<Field label={isBrazil ? 'Número' : 'Number / Apt'} error={form.formState.errors.number?.message}>
-					<Input
-						placeholder={isBrazil ? '123' : 'Apt 203'}
-						className="border-white/10 bg-white/5 text-white placeholder:text-white/25"
-						{...form.register('number')}
-					/>
-				</Field>
+												{address.address_line_2 && <p>Complemento: {address.address_line_2}</p>}
 
-				<Field label="Complemento" error={form.formState.errors.addressLine2?.message}>
-					<Input
-						placeholder="Opcional"
-						className="border-white/10 bg-white/5 text-white placeholder:text-white/25"
-						{...form.register('addressLine2')}
-					/>
-				</Field>
+												<p>CEP: {address.postal_code}</p>
 
-				{isBrazil ? (
-					<Field label="Bairro" error={form.formState.errors.district?.message}>
-						<Input
-							placeholder="Nome do bairro"
-							className="border-white/10 bg-white/5 text-white placeholder:text-white/25"
-							{...form.register('district')}
-						/>
-					</Field>
-				) : null}
+												<p>
+													{address.city}, {address.state}
+												</p>
+											</div>
+										</FieldContent>
 
-				<Field
-					label={isBrazil ? 'Cidade' : 'City'}
-					error={form.formState.errors.city?.message}
-					className={isBrazil ? undefined : 'sm:col-span-2'}
-				>
-					<Input
-						placeholder={isBrazil ? 'Manaus' : 'Miami'}
-						className="border-white/10 bg-white/5 text-white placeholder:text-white/25"
-						{...form.register('city')}
-					/>
-				</Field>
-			</div>
-		</Card>
+										{address.is_default && <span className="text-primary text-sm font-bold">PRINCIPAL</span>}
+
+										<RadioGroupItem value={address.id} id={address.id} />
+									</Field>
+								</FieldLabel>
+							);
+						})}
+					</RadioGroup>
+				)}
+			</Card>
+		</div>
 	);
 }

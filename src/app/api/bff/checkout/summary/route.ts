@@ -12,10 +12,12 @@ export async function POST(request: NextRequest) {
 		);
 	}
 
+	const body = await request.json();
+
 	return proxyApiRequest({
 		request,
-		apiPath: '/checkout/quote',
+		apiPath: '/checkout/summary',
 		method: 'POST',
-		body: null,
+		body,
 	});
 }

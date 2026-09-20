@@ -3,15 +3,15 @@
 import Link from 'next/link';
 import { useAutoAnimate } from '@formkit/auto-animate/react';
 
-import { useGetUserAddresses } from '../hooks/use-address-queries';
+import { useGetUserAddresses } from '../../hooks/use-address-queries';
 import { useSessionQuery } from '@/features/auth/hooks/use-auth-queries';
 
 import { Card } from '@/components/ui/card';
-import { AddressCard } from './profile/address-card';
+import { AddressCard } from './address-card';
 import { Button } from '@/components/ui/button';
-import { UserProfileForm } from './profile/user-profile-form';
-import { AddNewAddressDialog } from './profile/add-new-address-dialog';
-import { UserProfileFormSkeleton } from './profile/user-profile-form-skeleton';
+import { UserProfileForm } from './user-profile-form';
+import { AddNewAddressDialog } from './add-new-address-dialog';
+import { UserProfileFormSkeleton } from './user-profile-form-skeleton';
 
 import { ArrowLeft } from 'lucide-react';
 import { IconFileTextFilled, IconMapPins, IconUserFilled } from '@tabler/icons-react';

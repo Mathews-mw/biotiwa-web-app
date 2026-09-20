@@ -1,19 +1,8 @@
-import type { ICartItemType } from '@/features/cart/types/cart-entities.types';
+import type { ICartItemType, ICartSummaryItem } from '@/features/cart/types/cart-entities.types';
+import type { IOrderDetails, IOrderStatus } from '@/features/order/types/order.types';
 import type { IPaymentProvider, IPaymentStatus } from '@/features/payment/types/payment.types';
-import type { ICurrencyCode, IMarketCode, IProduct } from '@/features/commerce/types/commerce-entity-types';
-
-export type IOrderItemType = 'OFFER_ITEM' | 'PRODUCT' | 'ORDER_BUMP';
-
-export type IOrderStatus =
-	| 'PENDING_PAYMENT'
-	| 'PAID'
-	| 'PROCESSING'
-	| 'SHIPPED'
-	| 'DELIVERED'
-	| 'CANCELED'
-	| 'REFUNDED'
-	| 'PAYMENT_FAILED'
-	| 'EXPIRED';
+import type { ICurrencyCode, IMarketCode } from '@/features/commerce/types/commerce-entity-types';
+import { IShippingProvider } from '@/features/shipping/types/shipping-types';
 
 export interface ICheckoutQuote {
 	cart_id: string;
@@ -73,43 +62,24 @@ export interface ICheckoutSessionStatus {
 	order: IOrderDetails;
 }
 
-export interface IOrder {
-	id: string;
-	user_id: string;
-	cart_id?: string | null;
-	market_code: IMarketCode;
-	currency: ICurrencyCode;
-	status: IOrderStatus;
+export interface ICheckoutShippingSummary {
+	rate_id: string;
+	provider: IShippingProvider;
+	service_name: string;
+	carrier_name?: string | null;
+	amount: number;
+	estimated_days?: number | null;
+}
+export interface ICheckoutSummary {
 	items_amount: number;
 	order_bump_amount: number;
 	subtotal_amount: number;
 	discount_amount: number;
 	tax_amount: number;
-	shipping_amount: number;
+	cart_amount: number;
+	shipping_amount?: number | null;
+	shipping?: ICheckoutShippingSummary | null;
 	total_amount: number;
-	expires_at?: Date | null;
-	created_at: Date;
-	updated_at?: Date | null;
-}
-
-export interface IOrderItem {
-	id: string;
-	order_d: string;
-	product_d?: string | null;
-	type: IOrderItemType;
-	name: string;
-	sku: string;
-	quantity: number;
-	unit_amount: number;
-	total_amount: number;
-	metadata?: Record<string, unknown> | null;
-	created_at: Date;
-}
-
-export interface IOrderItemDetails extends IOrderItem {
-	product?: IProduct | null;
-}
-
-export interface IOrderDetails extends IOrder {
-	items: Array<IOrderItemDetails>;
+	currency: ICurrencyCode;
+	items: Array<ICartSummaryItem>;
 }

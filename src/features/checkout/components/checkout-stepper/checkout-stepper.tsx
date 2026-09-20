@@ -3,7 +3,7 @@ import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export type CheckoutStep = {
-	id: 'offer' | 'customer' | 'address' | 'review';
+	id: 'offer' | 'customer' | 'address' | 'shipping' | 'review';
 	title: string;
 	description: string;
 };

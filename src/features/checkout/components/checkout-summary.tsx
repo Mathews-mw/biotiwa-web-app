@@ -3,7 +3,8 @@ import Image from 'next/image';
 import { product } from '@/features/commerce/data/mock-catalog';
 import { formatMoney } from '@/features/commerce/lib/format-money';
 
-import type { ICheckoutQuote } from '../types/checkout.types';
+import type { ICheckoutSummary } from '../types/checkout.types';
+import type { IMarketCode } from '@/features/commerce/types/commerce-entity-types';
 
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -12,15 +13,14 @@ import { SummaryRow } from '@/features/commerce/components/summary-row';
 import { LockKeyhole } from 'lucide-react';
 
 type CheckoutSummaryProps = {
-	locale: string;
-	currency: 'BRL' | 'USD';
-	quote: ICheckoutQuote;
+	summary: ICheckoutSummary;
+	marketCode: IMarketCode;
 };
 
-export function CheckoutSummary({ locale, currency, quote }: CheckoutSummaryProps) {
-	const marketLAbel = quote.market_code === 'BR' ? 'Brasil' : 'United States';
-
-	const orderBump = quote.items.find((item) => item.type === 'ORDER_BUMP');
+export function CheckoutSummary({ summary, marketCode }: CheckoutSummaryProps) {
+	const marketLAbel = marketCode === 'BR' ? 'Brasil' : 'United States';
+	const currency = summary.currency;
+	const locale = summary.currency === 'BRL' ? 'pt-BR' : 'en-US';
 
 	return (
 		<Card className="border-white/10 bg-white/4 p-6 text-white shadow-2xl shadow-black/20">
@@ -32,7 +32,7 @@ export function CheckoutSummary({ locale, currency, quote }: CheckoutSummaryProp
 				<div>
 					<p className="font-medium">{product.name}</p>
 
-					<p className="mt-1 text-sm leading-5 text-white/45">{quote.items[0].name}</p>
+					{/* <p className="mt-1 text-sm leading-5 text-white/45">{quote.items[0].name}</p> */}
 
 					<p className="text-brand-gold mt-2 text-xs">
 						{marketLAbel} · {currency}
@@ -46,7 +46,7 @@ export function CheckoutSummary({ locale, currency, quote }: CheckoutSummaryProp
 				<SummaryRow
 					label="Subtotal"
 					value={formatMoney({
-						amount: quote.summary.subtotal_amount,
+						amount: summary.subtotal_amount,
 						currency,
 						locale,
 					})}
@@ -55,7 +55,7 @@ export function CheckoutSummary({ locale, currency, quote }: CheckoutSummaryProp
 				<SummaryRow
 					label="Desconto"
 					value={`- ${formatMoney({
-						amount: quote.summary.discount_amount,
+						amount: summary.discount_amount,
 						currency,
 						locale,
 					})}`}
@@ -64,7 +64,7 @@ export function CheckoutSummary({ locale, currency, quote }: CheckoutSummaryProp
 				<SummaryRow
 					label="Frete estimado"
 					value={formatMoney({
-						amount: quote.summary.shipping_amount,
+						amount: summary.shipping_amount ?? 0,
 						currency,
 						locale,
 					})}
@@ -73,17 +73,17 @@ export function CheckoutSummary({ locale, currency, quote }: CheckoutSummaryProp
 				<SummaryRow
 					label="Imposto estimado"
 					value={formatMoney({
-						amount: quote.summary.tax_amount,
+						amount: summary.tax_amount,
 						currency,
 						locale,
 					})}
 				/>
 
-				{orderBump ? (
+				{summary.order_bump_amount > 0 ? (
 					<SummaryRow
 						label="Oferta adicional"
 						value={formatMoney({
-							amount: orderBump.total_amount,
+							amount: summary.order_bump_amount,
 							currency,
 							locale,
 						})}
@@ -98,7 +98,7 @@ export function CheckoutSummary({ locale, currency, quote }: CheckoutSummaryProp
 
 				<span className="text-brand-gold text-3xl font-semibold tracking-[-0.04em]">
 					{formatMoney({
-						amount: quote.summary.total_amount,
+						amount: summary.total_amount,
 						currency,
 						locale,
 					})}

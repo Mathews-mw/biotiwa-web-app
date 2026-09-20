@@ -1,7 +1,6 @@
 'use client';
 
 import { Suspense, useState } from 'react';
-import { useMotionValueEvent, useScroll } from 'motion/react';
 
 import { cn } from '@/lib/utils';
 

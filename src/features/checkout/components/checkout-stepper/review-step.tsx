@@ -1,6 +1,6 @@
-import { UseFormReturn } from 'react-hook-form';
+import { UseFormReturn, useWatch } from 'react-hook-form';
 
-import type { ICheckoutQuote } from '../../types/checkout.types';
+import type { ICheckoutSummary } from '../../types/checkout.types';
 import type { ICheckoutFormInput } from '../../schemas/checkout-schema';
 import type { ICartDetails } from '@/features/cart/types/cart-entities.types';
 
@@ -15,13 +15,18 @@ import { ClipboardCheck } from 'lucide-react';
 
 type ReviewStepProps = {
 	form: UseFormReturn<ICheckoutFormInput>;
-	quote: ICheckoutQuote;
 	cart: ICartDetails;
+	summary: ICheckoutSummary;
 	isBrazil: boolean;
 };
 
-export function ReviewStep({ form, quote, isBrazil }: ReviewStepProps) {
+export function ReviewStep({ form, cart, summary, isBrazil }: ReviewStepProps) {
 	const values = form.watch();
+
+	const acceptPrivacy = useWatch({
+		control: form.control,
+		name: 'acceptPrivacy',
+	});
 
 	return (
 		<div className="grid gap-6">
@@ -66,11 +71,7 @@ export function ReviewStep({ form, quote, isBrazil }: ReviewStepProps) {
 				<Separator className="my-6 bg-white/10" />
 
 				<div className="lg:hidden">
-					<CheckoutSummary
-						locale={quote.summary.currency === 'BRL' ? 'pt-BR' : 'en-US'}
-						currency={quote.currency}
-						quote={quote}
-					/>
+					<CheckoutSummary summary={summary} marketCode={cart.market_code} />
 				</div>
 			</Card>
 
@@ -78,7 +79,7 @@ export function ReviewStep({ form, quote, isBrazil }: ReviewStepProps) {
 				<div className="flex items-start gap-3">
 					<Checkbox
 						id="acceptPrivacy"
-						checked={form.watch('acceptPrivacy')}
+						checked={acceptPrivacy}
 						onCheckedChange={(checked) => {
 							form.setValue('acceptPrivacy', checked === true, {
 								shouldValidate: true,

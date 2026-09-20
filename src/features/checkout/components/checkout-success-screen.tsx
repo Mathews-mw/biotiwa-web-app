@@ -118,6 +118,7 @@ export function CheckoutSuccessScreen() {
 			currency={checkoutSession.currency}
 			actionLabel="Voltar para a loja"
 			actionHref="/"
+			showOrderDetailsButton
 		/>
 	);
 }
