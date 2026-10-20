@@ -3,6 +3,7 @@ import type { IOrderDetails, IOrderStatus } from '@/features/order/types/order.t
 import type { IPaymentProvider, IPaymentStatus } from '@/features/payment/types/payment.types';
 import type { ICurrencyCode, IMarketCode } from '@/features/commerce/types/commerce-entity-types';
 import { IShippingProvider } from '@/features/shipping/types/shipping-types';
+import { IPromotionCodeType } from '@/features/promotion/types/promotion.types';
 
 export interface ICheckoutQuote {
 	cart_id: string;
@@ -70,6 +71,12 @@ export interface ICheckoutShippingSummary {
 	amount: number;
 	estimated_days?: number | null;
 }
+
+export interface ICheckoutPromotionSummary {
+	code: string;
+	type: IPromotionCodeType;
+	discount_amount: number;
+}
 export interface ICheckoutSummary {
 	items_amount: number;
 	order_bump_amount: number;
@@ -80,6 +87,7 @@ export interface ICheckoutSummary {
 	shipping_amount?: number | null;
 	shipping?: ICheckoutShippingSummary | null;
 	total_amount: number;
+	promotion?: ICheckoutPromotionSummary | null;
 	currency: ICurrencyCode;
 	items: Array<ICartSummaryItem>;
 }

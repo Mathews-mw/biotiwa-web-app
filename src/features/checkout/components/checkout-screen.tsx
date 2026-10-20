@@ -16,7 +16,11 @@ import { useSessionQuery } from '@/features/auth/hooks/use-auth-queries';
 import { useTrackEvent } from '@/features/tracking/hooks/use-track-event';
 import { useGetActiveCartQuery } from '@/features/cart/hooks/use-cart-queries';
 import { CheckoutStepper, type CheckoutStep } from './checkout-stepper/checkout-stepper';
-import { useCalculateCheckoutSummaryQuery, useCreateCheckoutSessionMutation } from '../hooks/use-checkout-queries';
+import {
+	useApplyPromotionCodeMutation,
+	useCalculateCheckoutSummaryQuery,
+	useCreateCheckoutSessionMutation,
+} from '../hooks/use-checkout-queries';
 
 import { ReviewStep } from './checkout-stepper/review-step';
 import { CheckoutSummaryCard } from './checkout-summary-card';
@@ -29,6 +33,9 @@ import { ShippingStep } from './checkout-stepper/shipping-step/shipping-step';
 import { CheckoutStepActions } from './checkout-stepper/checkout-step-actions';
 
 import { ArrowLeft } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { checkoutQueryKeys } from '../query-keys/checkout-query-keys';
+import { PromotionCodeInput } from '@/features/promotion/components/promotion-code-input';
 
 const checkoutSteps: CheckoutStep[] = [
 	{
@@ -60,6 +67,8 @@ const checkoutSteps: CheckoutStep[] = [
 
 export function CheckoutScreen() {
 	const router = useRouter();
+
+	const queryClient = useQueryClient();
 
 	const [currentStepIndex, setCurrentStepIndex] = useState(0);
 
@@ -97,6 +106,7 @@ export function CheckoutScreen() {
 			city: '',
 			state: '',
 			shippingRateId: '',
+			promotionCode: '',
 			acceptPrivacy: false,
 		},
 	});
@@ -106,11 +116,18 @@ export function CheckoutScreen() {
 		name: 'shippingRateId',
 	});
 
+	const promotionCode = useWatch({
+		control: form.control,
+		name: 'promotionCode',
+	});
+
+	const applyPromotionMutation = useApplyPromotionCodeMutation();
+
 	const checkoutSummaryQuery = useCalculateCheckoutSummaryQuery(
 		{
 			enabled: isAuthenticated && cartHasItems,
 		},
-		{ cartId: cart?.id, shippingRateId: shippingRateId || undefined }
+		{ cartId: cart?.id, shippingRateId: shippingRateId || undefined, promotionCode }
 	);
 
 	const checkoutSummary = checkoutSummaryQuery.data ?? null;
@@ -235,6 +252,45 @@ export function CheckoutScreen() {
 
 	const selectedOfferId = selectedOfferItem?.offer?.id ?? null;
 	const includeOrderBump = Boolean(selectedOrderBumpItem);
+
+	function handleRemovePromotion() {
+		form.setValue('promotionCode', '', {
+			shouldDirty: true,
+			shouldValidate: true,
+		});
+	}
+
+	async function handleApplyPromotion(code: string) {
+		console.log('handleApplyPromotion code: ', code);
+
+		const summaryResult = await applyPromotionMutation.mutateAsync({
+			promotionCode: code,
+			shippingRateId: shippingRateId || undefined,
+		});
+
+		console.log('summaryResult: ', summaryResult);
+
+		if (!summaryResult.success) {
+			toast.error(summaryResult.message);
+			return;
+		}
+
+		queryClient.setQueryData(
+			checkoutQueryKeys.summary({
+				cartId: cart?.id,
+				shippingRateId: shippingRateId || undefined,
+				promotionCode: code,
+			}),
+			summaryResult.data
+		);
+
+		form.setValue('promotionCode', code, {
+			shouldDirty: true,
+			shouldValidate: true,
+		});
+
+		toast.success(summaryResult.message);
+	}
 
 	async function handleSubmit(data: ICheckoutFormData) {
 		if (!cart || !checkoutSummary) {
@@ -398,8 +454,17 @@ export function CheckoutScreen() {
 						</form>
 					</section>
 
-					<aside className="lg:sticky lg:top-8 lg:block">
+					<aside className="space-y-4 lg:sticky lg:top-8 lg:block">
 						<CheckoutSummaryCard summary={checkoutSummary} />
+
+						<PromotionCodeInput
+							form={form}
+							appliedPromotion={checkoutSummary.promotion ?? null}
+							isApplying={applyPromotionMutation.isPending}
+							errorMessage={applyPromotionMutation.error?.message}
+							onApply={handleApplyPromotion}
+							onRemove={handleRemovePromotion}
+						/>
 					</aside>
 				</div>
 			</div>

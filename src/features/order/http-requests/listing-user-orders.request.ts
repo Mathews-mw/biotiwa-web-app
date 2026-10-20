@@ -1,7 +1,7 @@
 import { SearchParamsOption } from 'ky';
 
 import type { IOrderDetails } from '../types/order.types';
-import type { IPagination } from '@/core/actions/pagination.types';
+import type { IPagination } from '@/core/types/pagination.types';
 
 import { clientApi } from '@/lib/http/client-api';
 
