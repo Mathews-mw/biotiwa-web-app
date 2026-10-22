@@ -11,6 +11,7 @@ import { ConsentProvider } from '@/features/consent/context/consent-provider';
 import { CartSessionSync } from '@/features/cart/components/cart-session-sync';
 import { AuthSessionProvider } from '@/features/auth/context/auth-session-provider';
 import { DateProvider } from '@/providers/date-provider';
+import { ReferralCapture } from '@/features/referral/components/referral-capture';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -44,6 +45,7 @@ export default function RootLayout({
 					<QueryProvider>
 						<AuthSessionProvider>
 							<CartSessionSync />
+							<ReferralCapture />
 							{/* <ConsentProvider>{children}</ConsentProvider> */}
 							{children}
 						</AuthSessionProvider>

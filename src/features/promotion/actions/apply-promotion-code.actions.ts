@@ -23,7 +23,7 @@ export async function applyPromotionCodeAction(input: {
 			success: true,
 			message: 'Cupom aplicado com sucesso',
 			data: response,
-			errors: null,
+			errorCode: null,
 		};
 	} catch (error) {
 		console.log('set address as default error: ', error);
@@ -62,7 +62,7 @@ export async function applyPromotionCodeAction(input: {
 				success: false,
 				message: errorMsg,
 				data: null,
-				errors: null,
+				errorCode: error.code,
 			};
 		}
 
@@ -70,7 +70,7 @@ export async function applyPromotionCodeAction(input: {
 			success: false,
 			message: 'Erro inesperado. Por favor, tente novamente mais tarde',
 			data: null,
-			errors: null,
+			errorCode: null,
 		};
 	}
 }

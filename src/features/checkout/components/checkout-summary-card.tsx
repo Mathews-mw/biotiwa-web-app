@@ -33,7 +33,7 @@ export function CheckoutSummaryCard({ summary }: CheckoutSummaryCardProps) {
 			<div className="space-y-3 text-sm text-white/65">
 				<div className="flex justify-between">
 					<span>Subtotal</span>
-					<span>{formatMoney({ amount: summary.discount_amount, currency: summary.currency, locale: 'pt-BR' })}</span>
+					<span>{formatMoney({ amount: summary.subtotal_amount, currency: summary.currency, locale: 'pt-BR' })}</span>
 				</div>
 
 				{summary.promotion && summary.promotion.discount_amount > 0 && (
