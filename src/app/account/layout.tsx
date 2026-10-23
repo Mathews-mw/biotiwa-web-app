@@ -1,6 +1,7 @@
+import { ReactNode } from 'react';
+
 import { SiteFooter } from '@/components/layout/site-footer';
 import { AccountHeader } from '@/features/account/components/account-header';
-import { ReactNode } from 'react';
 
 export default function AccountLayout({ children }: { children: ReactNode }) {
 	return (

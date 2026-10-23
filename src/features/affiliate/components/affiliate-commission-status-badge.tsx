@@ -13,5 +13,9 @@ export function AffiliateCommissionStatusBadge({ status }: IProps) {
 		CANCELED: 'Cancelado',
 	};
 
-	return <Badge variant={status === 'CANCELED' ? 'destructive' : 'secondary'}>{labels[status]}</Badge>;
+	return (
+		<Badge variant={status === 'CANCELED' ? 'destructive' : status === 'AVAILABLE' ? 'default' : 'secondary'}>
+			{labels[status]}
+		</Badge>
+	);
 }
