@@ -20,9 +20,15 @@ export function AffiliateNotFoundState() {
 						Não encontramos um cadastro de afiliado associado à sua conta.
 					</p>
 
-					<Button asChild className="mt-6">
-						<Link href="/">Voltar para a loja</Link>
-					</Button>
+					<div className="mt-6 flex flex-wrap justify-center gap-2">
+						<Button asChild>
+							<Link href="/biotiwa-club">Quero ser afiliado</Link>
+						</Button>
+
+						<Button asChild variant="outline">
+							<Link href="/">Voltar para a loja</Link>
+						</Button>
+					</div>
 				</CardContent>
 			</Card>
 		</div>

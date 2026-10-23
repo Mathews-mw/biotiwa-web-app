@@ -1,5 +1,6 @@
+import type { IUser } from '@/features/account/types/user.types';
+import type { IPromotionCode } from '@/features/promotion/types/promotion.types';
 import type { ICurrencyCode, IMarketCode } from '@/features/commerce/types/commerce-entity-types';
-import { IPromotionCode } from '@/features/promotion/types/promotion.types';
 
 export type IAffiliateType = 'PROMOTER' | 'RESELLER';
 export type IAffiliateStatus = 'PENDING' | 'ACTIVE' | 'SUSPENDED' | 'INACTIVE';
@@ -12,6 +13,11 @@ export interface IAffiliate {
 	status: IAffiliateStatus;
 	created_at: Date;
 	updated_at?: Date | null;
+}
+
+export interface IAffiliateDetails {
+	affiliate: IAffiliate;
+	user: IUser;
 }
 
 export interface IAffiliatePromotionCode {
