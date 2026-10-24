@@ -27,15 +27,12 @@ const productFacts = [
 
 export function ProductDetailsSection() {
 	return (
-		<section
-			id="produto"
-			className="scroll-mt-24 overflow-hidden bg-[#efe6d9] px-6 py-28 text-[#1b0d21] lg:px-10 lg:py-40"
-		>
+		<section id="produto" className="scroll-mt-24 overflow-hidden bg-[#0d0710] px-6 py-28 text-white lg:px-10 lg:py-40">
 			<div className="mx-auto grid max-w-7xl items-center gap-16 lg:grid-cols-[0.9fr_1.1fr] lg:gap-24">
 				<FadeIn className="relative mx-auto aspect-4/5 w-full max-w-lg">
-					<div className="bg-brand-acai/15 absolute inset-[10%] rounded-full blur-[90px]" />
+					<div className="absolute inset-0 rounded-[3rem] border border-white/10 bg-white/2.5" />
 
-					<div className="absolute inset-0 rounded-[3rem] border border-[#1b0d21]/10 bg-white/30" />
+					<div className="bg-brand-acai/15 absolute inset-[10%] rounded-full blur-[90px]" />
 
 					<Image
 						src="/images/product/acaipulse-bottle.png"
@@ -48,19 +45,19 @@ export function ProductDetailsSection() {
 
 				<div>
 					<FadeIn>
-						<p className="text-brand-acai text-xs font-semibold tracking-[0.3em] uppercase">Açaípulse®</p>
+						<p className="text-brand-gold text-xs font-semibold tracking-[0.3em] uppercase">Açaípulse®</p>
 
 						<h2 className="mt-6 text-5xl leading-[0.96] font-medium tracking-[-0.06em] text-balance sm:text-6xl lg:text-7xl">
 							Conheça cada detalhe.
 						</h2>
 
-						<p className="mt-7 max-w-xl text-lg leading-8 text-[#1b0d21]/60">
+						<p className="mt-7 max-w-xl text-lg leading-8 text-white/65">
 							A futura página comercial reunirá composição, modo de uso, documentação, informações nutricionais e
 							disponibilidade.
 						</p>
 					</FadeIn>
 
-					<div className="mt-12 divide-y divide-[#1b0d21]/15 border-y border-[#1b0d21]/15">
+					<div className="mt-12 divide-y divide-white/15 border-y border-white/15">
 						{productFacts.map((fact, index) => {
 							const Icon = fact.icon;
 
@@ -74,7 +71,7 @@ export function ProductDetailsSection() {
 
 									<div>
 										<h3 className="font-medium">{fact.title}</h3>
-										<p className="mt-1 text-sm leading-6 text-[#1b0d21]/50">{fact.description}</p>
+										<p className="mt-1 text-sm leading-6 text-white/65">{fact.description}</p>
 									</div>
 								</FadeIn>
 							);
@@ -88,7 +85,7 @@ export function ProductDetailsSection() {
 								buttonVariants({
 									size: 'lg',
 								}),
-								'rounded-full bg-[#31113b] px-7 text-white hover:bg-[#4a1a58]'
+								'text-foreground flex items-center justify-center rounded-full bg-white px-7 hover:bg-white/90'
 							)}
 						>
 							Quero saber mais
@@ -102,7 +99,7 @@ export function ProductDetailsSection() {
 									variant: 'outline',
 									size: 'lg',
 								}),
-								'rounded-full border-[#1b0d21]/20 bg-transparent px-7 text-[#1b0d21] hover:bg-[#1b0d21]/5'
+								'rounded-full border-white bg-transparent px-7 text-white hover:bg-white/90'
 							)}
 						>
 							Ver informações

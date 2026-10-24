@@ -14,20 +14,20 @@ export function IngredientsSection() {
 	const activeIngredient = ingredientItems[activeIngredientIndex];
 
 	return (
-		<section className="overflow-hidden bg-[#efe6d9] px-6 py-28 text-[#1b0d21] lg:px-10 lg:py-40">
+		<section className="overflow-hidden bg-[#0d0710] px-6 py-28 text-white lg:px-10 lg:py-40">
 			<div className="mx-auto grid max-w-7xl items-center gap-16 lg:grid-cols-2 lg:gap-24">
 				<div>
-					<span className="border-brand-acai/15 bg-brand-acai/5 text-brand-acai inline-flex rounded-full border px-4 py-2 text-xs font-medium tracking-[0.2em] uppercase">
+					<span className="text-brand-gold inline-flex rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-medium tracking-[0.2em] uppercase">
 						Conteúdo provisório
 					</span>
 
-					<p className="text-brand-acai mt-8 text-xs font-semibold tracking-[0.28em] uppercase">Composição</p>
+					<p className="text-brand-gold mt-8 text-xs font-semibold tracking-[0.28em] uppercase">Composição</p>
 
 					<h2 className="mt-6 max-w-xl text-5xl leading-[0.98] font-medium tracking-[-0.055em] text-balance sm:text-6xl">
 						O que existe por trás da fórmula?
 					</h2>
 
-					<p className="mt-7 max-w-lg text-lg leading-8 text-[#1b0d21]/60">
+					<p className="mt-7 max-w-lg text-lg leading-8 text-white/75">
 						Esta seção deverá ser preenchida somente com os ingredientes e textos oficialmente aprovados pelo cliente.
 					</p>
 
@@ -42,15 +42,15 @@ export function IngredientsSection() {
 									aria-pressed={isActive}
 									onClick={() => setActiveIngredientIndex(index)}
 									onMouseEnter={() => setActiveIngredientIndex(index)}
-									className="group flex w-full items-center justify-between border-b border-[#1b0d21]/15 py-6 text-start"
+									className="group flex w-full items-center justify-between border-b border-white/10 py-6 text-start"
 								>
 									<div>
-										<span className="text-brand-acai/60 text-xs">{String(index + 1).padStart(2, '0')}</span>
+										<span className="text-xs text-white/45">{String(index + 1).padStart(2, '0')}</span>
 
 										<p
 											className={cn(
 												'mt-1 text-xl transition-colors',
-												isActive ? 'text-brand-acai' : 'text-[#1b0d21]/55 group-hover:text-[#1b0d21]'
+												isActive ? 'text-white' : 'text-white/45 group-hover:text-[#1b0d21]'
 											)}
 										>
 											{ingredient.name}
@@ -60,7 +60,7 @@ export function IngredientsSection() {
 									<span
 										className={cn(
 											'size-2 rounded-full transition-all',
-											isActive ? 'bg-brand-acai scale-100' : 'scale-50 bg-[#1b0d21]/20'
+											isActive ? 'bg-brand-gold scale-100' : 'bg-brand-acai scale-50'
 										)}
 									/>
 								</button>
