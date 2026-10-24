@@ -1,3 +1,4 @@
+import { IAffiliate } from '@/features/affiliate/types/affiliate.types';
 import { IMarketCode } from '@/features/commerce/types/commerce-entity-types';
 
 export interface IUser {
@@ -23,4 +24,5 @@ export interface ICustomerProfile {
 
 export interface IUserProfile extends IUser {
 	profile: ICustomerProfile;
+	affiliate: IAffiliate | null;
 }

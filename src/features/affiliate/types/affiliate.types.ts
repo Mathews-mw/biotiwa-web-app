@@ -1,6 +1,6 @@
 import type { IUser } from '@/features/account/types/user.types';
-import type { IPromotionCode } from '@/features/promotion/types/promotion.types';
 import type { ICurrencyCode, IMarketCode } from '@/features/commerce/types/commerce-entity-types';
+import type { IPromotionCode, IPromotionDiscountType } from '@/features/promotion/types/promotion.types';
 
 export type IAffiliateType = 'PROMOTER' | 'RESELLER';
 export type IAffiliateStatus = 'PENDING' | 'ACTIVE' | 'SUSPENDED' | 'INACTIVE';
@@ -52,6 +52,12 @@ export interface AffiliateProgramSettings {
 	min_code_lifetime_days: number;
 	max_code_lifetime_days: number;
 	attribution_window_days: number;
+	self_service_code_creation_enabled: boolean;
+	max_active_codes_per_affiliate: number;
+	default_affiliate_discount_type: IPromotionDiscountType;
+	default_affiliate_discount_value: number;
+	default_affiliate_commission_rate: number;
+	max_uses_per_customer_limit: number;
 	is_active: boolean;
 	created_at: Date;
 	updated_at?: Date | null;
@@ -97,4 +103,10 @@ export interface IAffiliateSales {
 	commission_status: IAffiliateCommissionStatus;
 	currency: ICurrencyCode;
 	created_at: Date;
+}
+
+export interface IAffiliatePromotionCodeSettings {
+	enabled: boolean;
+	active_codes: number;
+	settings: AffiliateProgramSettings;
 }

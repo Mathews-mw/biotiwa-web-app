@@ -18,3 +18,23 @@ export async function GET(request: NextRequest) {
 		method: 'GET',
 	});
 }
+
+export async function POST(request: NextRequest) {
+	if (request.method !== 'POST') {
+		return Response.json(
+			{
+				error: 'Method not allowed!',
+			},
+			{ status: 405 }
+		);
+	}
+
+	const body = await request.json();
+
+	return proxyApiRequest({
+		request,
+		apiPath: '/affiliates/me/promotion-codes',
+		method: 'POST',
+		body,
+	});
+}

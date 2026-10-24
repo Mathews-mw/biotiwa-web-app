@@ -1,13 +1,15 @@
 'use client';
 
 import Link from 'next/link';
+import { useMemo } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { getUserInitials } from '../lib/get-user-initials';
-import { useGetActiveCartQuery } from '@/features/cart/hooks/use-cart-queries';
 import { useAuthSession } from '@/features/auth/hooks/use-auth-session';
 import { useLogoutMutation } from '@/features/auth/hooks/use-auth-queries';
+import { useGetActiveCartQuery } from '@/features/cart/hooks/use-cart-queries';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -19,8 +21,7 @@ import {
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-import { Loader2, LogOut, Package, ShoppingBag, UserRound } from 'lucide-react';
-import { useMemo } from 'react';
+import { Handshake, Loader2, LogOut, Package, ShoppingBag, UserRound } from 'lucide-react';
 
 export function UserMenu() {
 	const router = useRouter();
@@ -37,6 +38,8 @@ export function UserMenu() {
 	const { data: activeCartData } = useGetActiveCartQuery({
 		enabled: Boolean(user),
 	});
+
+	const isAffiliate = !!user?.affiliate;
 
 	const cartItemsCount = useMemo(() => {
 		const hasActiveCart = !!activeCartData && activeCartData.cart !== null;
@@ -90,7 +93,10 @@ export function UserMenu() {
 
 			<DropdownMenuContent align="end" className="w-64">
 				<DropdownMenuLabel>
-					<p className="font-medium">{user.name}</p>
+					<div className="flex w-full items-center justify-between">
+						<p className="font-medium">{user.name}</p>
+						{isAffiliate && <Badge className="text-[0.65rem]">AFILIADO</Badge>}
+					</div>
 					<p className="mt-1 truncate text-xs font-normal">{user.email}</p>
 				</DropdownMenuLabel>
 
@@ -119,6 +125,13 @@ export function UserMenu() {
 					<Link href="/account/orders">
 						<Package className="size-4" />
 						Meus pedidos
+					</Link>
+				</DropdownMenuItem>
+
+				<DropdownMenuItem asChild className="cursor-pointer">
+					<Link href="/affiliate">
+						<Handshake className="size-4" />
+						Portal do afiliado
 					</Link>
 				</DropdownMenuItem>
 
