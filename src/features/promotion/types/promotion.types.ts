@@ -21,7 +21,11 @@ export interface IPromotionCode {
 	updated_at?: Date | null;
 }
 
-export interface PromotionRedemptionProps {
+export interface IPromotionCodeDetails extends IPromotionCode {
+	redemptions: IPromotionRedemption[];
+}
+
+export interface IPromotionRedemption {
 	id: string;
 	promotion_code_id: string;
 	user_id: string;

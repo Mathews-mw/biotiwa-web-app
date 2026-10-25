@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Suspense, useState } from 'react';
 import { useMotionValueEvent, useScroll } from 'motion/react';
 
@@ -36,15 +37,15 @@ export function SiteHeader() {
 			)}
 		>
 			<div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-10">
-				<a
-					href="#top"
+				<Link
+					href="/#top"
 					aria-label="Açaípulse — Voltar ao início"
 					className="relative z-10 text-xl font-semibold tracking-[-0.04em] text-[#f7f1e8]"
 				>
 					Açaí
 					<span className="text-brand-violet">pulse</span>
 					<sup className="ms-0.5 text-[0.45em] font-normal">®</sup>
-				</a>
+				</Link>
 
 				<nav aria-label="Navegação principal" className="hidden items-center gap-8 lg:flex">
 					{navigationItems.map((item) => (

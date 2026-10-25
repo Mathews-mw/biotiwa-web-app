@@ -38,8 +38,8 @@ export function AffiliateSalesTable({ sales }: IProps) {
 							<TableCell>{createdDateFormatted.date}</TableCell>
 							<TableCell>{sale.order_id}</TableCell>
 							<TableCell>{sale.promotion_code}</TableCell>
-							<TableCell>{priceFormatter({ value: sale.sale_amount, currency: sale.currency })}</TableCell>
-							<TableCell>{priceFormatter({ value: sale.commission_amount, currency: sale.currency })}</TableCell>
+							<TableCell>{priceFormatter({ value: sale.sale_amount / 100, currency: sale.currency })}</TableCell>
+							<TableCell>{priceFormatter({ value: sale.commission_amount / 100, currency: sale.currency })}</TableCell>
 
 							<TableCell>
 								<AffiliateCommissionStatusBadge status={sale.commission_status} />

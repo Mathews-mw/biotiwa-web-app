@@ -6,12 +6,12 @@ import { Geist, Geist_Mono, Inter } from 'next/font/google';
 
 import { cn } from '@/lib/utils';
 
-import { QueryProvider } from '@/providers/query-provider';
-import { ConsentProvider } from '@/features/consent/context/consent-provider';
-import { CartSessionSync } from '@/features/cart/components/cart-session-sync';
-import { AuthSessionProvider } from '@/features/auth/context/auth-session-provider';
 import { DateProvider } from '@/providers/date-provider';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { QueryProvider } from '@/providers/query-provider';
+import { CartSessionSync } from '@/features/cart/components/cart-session-sync';
 import { ReferralCapture } from '@/features/referral/components/referral-capture';
+import { AuthSessionProvider } from '@/features/auth/context/auth-session-provider';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -47,7 +47,7 @@ export default function RootLayout({
 							<CartSessionSync />
 							<ReferralCapture />
 							{/* <ConsentProvider>{children}</ConsentProvider> */}
-							{children}
+							<TooltipProvider>{children}</TooltipProvider>
 						</AuthSessionProvider>
 					</QueryProvider>
 				</DateProvider>

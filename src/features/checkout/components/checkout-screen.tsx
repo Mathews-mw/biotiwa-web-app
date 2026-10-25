@@ -395,6 +395,7 @@ export function CheckoutScreen() {
 					countryCode: cart.market_code,
 				},
 				shippingRateId: data.shippingRateId,
+				promotionCode: data.promotionCode,
 			});
 
 			if (checkoutSessionResult.payment_url) {

@@ -50,11 +50,6 @@ export default function AffiliateSalesPage() {
 		<div className="space-y-6">
 			<div>
 				<h2 className="text-xl font-semibold">Vendas</h2>
-
-				<p className="text-muted-foreground text-sm">
-					{pagination.total_occurrences}{' '}
-					{pagination.total_occurrences === 1 ? 'venda encontrada' : 'vendas encontradas'}
-				</p>
 			</div>
 
 			<AffiliateSalesTable sales={sales} />

@@ -11,6 +11,7 @@ import { AffiliateAreaLoading } from './affiliate-area-loading';
 import { AffiliateStatusBadge } from './affiliate-status-badge';
 import { AffiliateStatusNotice } from './affiliate-status-notice';
 import { AffiliateNotFoundState } from './affiliate-not-found-state';
+import { Separator } from '@/components/ui/separator';
 
 interface Props {
 	children: ReactNode;
@@ -35,7 +36,7 @@ export function AffiliateAreaGuard({ children }: Props) {
 
 	return (
 		<div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-8">
-			<header className="space-y-4">
+			<div className="space-y-4">
 				<div className="flex flex-wrap items-center justify-between gap-3">
 					<div>
 						<div className="flex items-center gap-3">
@@ -49,7 +50,9 @@ export function AffiliateAreaGuard({ children }: Props) {
 				</div>
 
 				<AffiliateNavigation />
-			</header>
+
+				<Separator />
+			</div>
 
 			<AffiliateStatusNotice status={affiliate.status} />
 

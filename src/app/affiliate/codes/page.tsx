@@ -14,7 +14,7 @@ import { Tags } from 'lucide-react';
 
 export default function AffiliateCodesPage() {
 	const dashboardQuery = useAffiliateDashboardQuery();
-	const codesQuery = useAffiliatePromotionCodesQuery();
+	const codesQuery = useAffiliatePromotionCodesQuery({ redemptionStatus: 'REDEEMED' });
 	const affiliatePromotionCodeSettingsQuery = useAffiliatePromotionCodeSettingsQuery('BR');
 
 	if (codesQuery.isPending) {

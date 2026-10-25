@@ -1,7 +1,7 @@
 'use client';
 
 import type { IAffiliateStatus } from '../types/affiliate.types';
-import type { IPromotionCode } from '@/features/promotion/types/promotion.types';
+import type { IPromotionCodeDetails } from '@/features/promotion/types/promotion.types';
 
 import { formatBasisPoints } from '@/features/promotion/helpers/format-basis';
 import { isAffiliatePromotionCodeAvailable } from '../helpers/is-affiliate-promotion-code-available';
@@ -9,10 +9,12 @@ import { isAffiliatePromotionCodeAvailable } from '../helpers/is-affiliate-promo
 import { Badge } from '@/components/ui/badge';
 import { CopyButton } from '@/components/copy-button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Info } from 'lucide-react';
 
 interface IProps {
-	promotion: IPromotionCode;
 	commissionRate: number;
+	promotion: IPromotionCodeDetails;
 	affiliateStatus: IAffiliateStatus;
 }
 
@@ -76,9 +78,20 @@ export function AffiliatePromotionCodeCard({ promotion, affiliateStatus, commiss
 					</div>
 
 					<div>
-						<p className="text-muted-foreground">Usos por cliente</p>
+						<div className="flex items-center gap-2">
+							<p className="text-muted-foreground">Usos por cliente</p>
 
-						<p>{promotion.max_uses_per_customer ?? 'Sem limite'}</p>
+							<Tooltip>
+								<TooltipTrigger>
+									<Info className="text-muted-foreground size-4" />
+								</TooltipTrigger>
+								<TooltipContent>Códigos resgatados / Quantidade máxima de uso por clientes</TooltipContent>
+							</Tooltip>
+						</div>
+
+						<p>
+							{promotion.redemptions.length} / {promotion.max_uses_per_customer ?? 'Sem limite'}
+						</p>
 					</div>
 				</div>
 

@@ -5,7 +5,7 @@ export const affiliateQueryKeys = {
 	listing: (...args: unknown[]) => [...affiliateQueryKeys.all, ...args] as const,
 	dashboard: () => [...affiliateQueryKeys.all, 'dashboard'] as const,
 	sales: (...args: unknown[]) => [...affiliateQueryKeys.all, 'sales', ...args] as const,
-	promotionCodes: () => [...affiliateQueryKeys.all, 'promotion-codes'] as const,
+	promotionCodes: (...args: unknown[]) => [...affiliateQueryKeys.all, 'promotion-codes', ...args] as const,
 	promotionCodeSettings: (marketCode?: IMarketCode) =>
 		[...affiliateQueryKeys.all, 'promotion-code-settings', marketCode] as const,
 };
