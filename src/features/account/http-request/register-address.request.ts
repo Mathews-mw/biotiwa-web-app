@@ -1,6 +1,3 @@
-import { IMarketCode } from '@/features/commerce/types/commerce-entity-types';
-
-import { clientApi } from '@/lib/http/client-api';
 import { serverApi } from '@/lib/http/server-api';
 
 interface IRequest {

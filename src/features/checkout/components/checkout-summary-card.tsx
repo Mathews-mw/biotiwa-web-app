@@ -10,7 +10,7 @@ type CheckoutSummaryCardProps = {
 
 export function CheckoutSummaryCard({ summary }: CheckoutSummaryCardProps) {
 	return (
-		<aside className="rounded-[2rem] border border-white/10 bg-white/4 p-6 text-white">
+		<div className="rounded-[2rem] border border-white/10 bg-white/4 p-6 text-white">
 			<p className="text-brand-gold text-sm font-medium tracking-[0.25em] uppercase">Resumo do pedido</p>
 
 			<div className="mt-6 space-y-4">
@@ -33,8 +33,17 @@ export function CheckoutSummaryCard({ summary }: CheckoutSummaryCardProps) {
 			<div className="space-y-3 text-sm text-white/65">
 				<div className="flex justify-between">
 					<span>Subtotal</span>
-					<span>{formatMoney({ amount: summary.discount_amount, currency: summary.currency, locale: 'pt-BR' })}</span>
+					<span>{formatMoney({ amount: summary.subtotal_amount, currency: summary.currency, locale: 'pt-BR' })}</span>
 				</div>
+
+				{summary.promotion && summary.promotion.discount_amount > 0 && (
+					<div className="flex justify-between text-emerald-200">
+						<span>Código {summary.promotion.code}</span>
+						<span>
+							-{formatMoney({ amount: summary.promotion.discount_amount, currency: summary.currency, locale: 'pt-BR' })}
+						</span>
+					</div>
+				)}
 
 				{summary.discount_amount > 0 && (
 					<div className="flex justify-between text-emerald-200">
@@ -68,6 +77,6 @@ export function CheckoutSummaryCard({ summary }: CheckoutSummaryCardProps) {
 			</div>
 
 			<p className="mt-4 text-xs text-white/40">Esta cotação pode ser recalculada antes do pagamento.</p>
-		</aside>
+		</div>
 	);
 }

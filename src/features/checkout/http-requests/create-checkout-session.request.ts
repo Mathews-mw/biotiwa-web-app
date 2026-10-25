@@ -22,6 +22,7 @@ interface IRequest {
 		countryCode: ICountryCode;
 	};
 	shippingRateId: string;
+	promotionCode?: string;
 }
 
 type IResponse = ICheckoutSession;
@@ -48,6 +49,7 @@ export async function createCheckoutSessionRequest(input: IRequest): Promise<IRe
 					country_code: input.shippingAddress.countryCode,
 				},
 				shipping_rate_id: input.shippingRateId,
+				promotion_code: input.promotionCode,
 			},
 		})
 		.json<IResponse>();

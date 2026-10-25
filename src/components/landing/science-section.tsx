@@ -24,9 +24,12 @@ const scienceItems = [
 
 export function ScienceSection() {
 	return (
-		<section id="ciencia" className="scroll-mt-24 bg-[#0d0710] px-6 py-28 text-white lg:px-10 lg:py-40">
+		<section
+			id="ciencia"
+			className="scroll-mt-24 border-y border-[#1b0d21]/15 bg-[#efe6d9] px-6 py-28 text-[#1b0d21] lg:px-10 lg:py-40"
+		>
 			<div className="mx-auto grid max-w-7xl gap-16 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-24">
-				<FadeIn className="relative min-h-140 overflow-hidden rounded-[2.5rem] border border-white/10">
+				<FadeIn className="relative min-h-140 overflow-hidden rounded-[2.5rem] border border-[#1b0d21]/15">
 					<Image
 						src="https://images.unsplash.com/photo-1664956618021-73c47736845e?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
 						alt="Ambiente de laboratório"
@@ -48,32 +51,32 @@ export function ScienceSection() {
 
 				<div>
 					<FadeIn>
-						<p className="text-brand-gold text-xs font-medium tracking-[0.3em] uppercase">Ciência e confiança</p>
+						<p className="text-brand-acai text-xs font-medium tracking-[0.3em] uppercase">Ciência e confiança</p>
 
 						<h2 className="mt-6 max-w-xl text-5xl leading-[0.98] font-medium tracking-[-0.055em] text-balance sm:text-6xl">
 							Informação também faz parte do produto.
 						</h2>
 
-						<p className="mt-7 max-w-xl text-lg leading-8 text-white/55">
+						<p className="mt-7 max-w-xl text-lg leading-8 text-[#1b0d21]/60">
 							A página poderá reunir conteúdo técnico, documentação, certificações e informações importantes para a
 							decisão do consumidor.
 						</p>
 					</FadeIn>
 
-					<div className="mt-14 divide-y divide-white/10 border-y border-white/10">
+					<div className="mt-14 divide-y divide-[#1b0d21]/15 border-y border-[#1b0d21]/15">
 						{scienceItems.map((item, index) => {
 							const Icon = item.icon;
 
 							return (
 								<FadeIn key={item.title} delay={index * 0.08} className="grid grid-cols-[auto_1fr] gap-5 py-7">
-									<div className="flex size-11 items-center justify-center rounded-full bg-white/5">
+									<div className="bg-brand-acai/10 flex size-11 items-center justify-center rounded-full border border-[#1b0d21]/15">
 										<Icon className="text-brand-violet size-5" />
 									</div>
 
 									<div>
 										<h3 className="text-lg font-medium">{item.title}</h3>
 
-										<p className="mt-2 text-sm leading-7 text-white/45">{item.description}</p>
+										<p className="mt-2 text-sm leading-7 text-[#1b0d21]/60">{item.description}</p>
 									</div>
 								</FadeIn>
 							);

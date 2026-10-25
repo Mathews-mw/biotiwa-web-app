@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
+import Link from 'next/link';
 import { buttonVariants } from '@/components/ui/button';
 import { navigationItems } from '@/content/landing-page';
 import { UserMenu, UserMenuFallback } from '@/features/account/components/user-menu';
@@ -17,15 +18,15 @@ export function AccountHeader() {
 	return (
 		<header className={'bg-valentino/90 border-b border-white/10 shadow-2xl shadow-black/10 backdrop-blur-xl'}>
 			<div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-10">
-				<a
-					href="#top"
+				<Link
+					href="/"
 					aria-label="Açaípulse — Voltar ao início"
 					className="text-brand-cream relative z-10 text-xl font-semibold tracking-[-0.04em]"
 				>
 					Açaí
 					<span className="text-brand-violet">pulse</span>
 					<sup className="ms-0.5 text-[0.45em] font-normal">®</sup>
-				</a>
+				</Link>
 
 				<nav aria-label="Navegação principal" className="hidden items-center gap-8 lg:flex">
 					{navigationItems.map((item) => (

@@ -16,6 +16,10 @@ export const navigationItems = [
 		href: '#ciencia',
 	},
 	{
+		label: 'Clube Biotiwa',
+		href: '#biotiwa-club',
+	},
+	{
 		label: 'Oferta',
 		href: '#oferta',
 	},

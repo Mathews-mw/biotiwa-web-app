@@ -1,7 +1,7 @@
 'use client';
 
 import { toast } from 'sonner';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useWatch, type FieldPath } from 'react-hook-form';
@@ -16,7 +16,11 @@ import { useSessionQuery } from '@/features/auth/hooks/use-auth-queries';
 import { useTrackEvent } from '@/features/tracking/hooks/use-track-event';
 import { useGetActiveCartQuery } from '@/features/cart/hooks/use-cart-queries';
 import { CheckoutStepper, type CheckoutStep } from './checkout-stepper/checkout-stepper';
-import { useCalculateCheckoutSummaryQuery, useCreateCheckoutSessionMutation } from '../hooks/use-checkout-queries';
+import {
+	useApplyPromotionCodeMutation,
+	useCalculateCheckoutSummaryQuery,
+	useCreateCheckoutSessionMutation,
+} from '../hooks/use-checkout-queries';
 
 import { ReviewStep } from './checkout-stepper/review-step';
 import { CheckoutSummaryCard } from './checkout-summary-card';
@@ -29,6 +33,13 @@ import { ShippingStep } from './checkout-stepper/shipping-step/shipping-step';
 import { CheckoutStepActions } from './checkout-stepper/checkout-step-actions';
 
 import { ArrowLeft } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { checkoutQueryKeys } from '../query-keys/checkout-query-keys';
+import { PromotionCodeInput } from '@/features/promotion/components/promotion-code-input';
+import { useReferralQuery } from '@/features/referral/hooks/use-referral-query';
+import { clearReferralRequest } from '@/features/referral/http-requests/clear-referral.request';
+import { referralQueryKeys } from '@/features/referral/query-keys/referral-query-keys';
+import { isInvalidPromotionError } from '@/features/referral/helpers/is-invalid-promotion-error';
 
 const checkoutSteps: CheckoutStep[] = [
 	{
@@ -61,12 +72,19 @@ const checkoutSteps: CheckoutStep[] = [
 export function CheckoutScreen() {
 	const router = useRouter();
 
+	const queryClient = useQueryClient();
+
 	const [currentStepIndex, setCurrentStepIndex] = useState(0);
 
 	const { isAuthenticated } = useAuthSession();
 	const sessionQuery = useSessionQuery();
 
 	const user = sessionQuery.data?.session?.user ?? null;
+
+	const referralQuery = useReferralQuery();
+
+	const attemptedReferralRef = useRef<string | null>(null);
+	const appliedReferralRef = useRef<string | null>(null);
 
 	const activeCartQuery = useGetActiveCartQuery({
 		enabled: isAuthenticated,
@@ -97,6 +115,7 @@ export function CheckoutScreen() {
 			city: '',
 			state: '',
 			shippingRateId: '',
+			promotionCode: '',
 			acceptPrivacy: false,
 		},
 	});
@@ -106,11 +125,18 @@ export function CheckoutScreen() {
 		name: 'shippingRateId',
 	});
 
+	const promotionCode = useWatch({
+		control: form.control,
+		name: 'promotionCode',
+	});
+
+	const applyPromotionMutation = useApplyPromotionCodeMutation();
+
 	const checkoutSummaryQuery = useCalculateCheckoutSummaryQuery(
 		{
 			enabled: isAuthenticated && cartHasItems,
 		},
-		{ cartId: cart?.id, shippingRateId: shippingRateId || undefined }
+		{ cartId: cart?.id, shippingRateId: shippingRateId || undefined, promotionCode }
 	);
 
 	const checkoutSummary = checkoutSummaryQuery.data ?? null;
@@ -120,6 +146,34 @@ export function CheckoutScreen() {
 		userId: user?.id ?? null,
 		enabled: Boolean(user),
 	});
+
+	// Aplica CUPOM através de um referral acessado da url (ex.: /?ref=MARIA10)
+	useEffect(() => {
+		const referralCode = referralQuery.data?.code;
+
+		if (!referralCode) {
+			return;
+		}
+
+		if (promotionCode) {
+			return;
+		}
+
+		// Evita repetir a mesma tentativa
+		if (attemptedReferralRef.current === referralCode) {
+			return;
+		}
+
+		attemptedReferralRef.current = referralCode;
+
+		void handleApplyPromotion(referralCode)
+			.then(() => {
+				appliedReferralRef.current = referralCode;
+			})
+			.catch((_err) => {
+				attemptedReferralRef.current = null;
+			});
+	}, [referralQuery.data?.code, promotionCode]);
 
 	useEffect(() => {
 		if (!user) {
@@ -236,6 +290,69 @@ export function CheckoutScreen() {
 	const selectedOfferId = selectedOfferItem?.offer?.id ?? null;
 	const includeOrderBump = Boolean(selectedOrderBumpItem);
 
+	async function handleApplyPromotion(code: string) {
+		const normalizedCode = code.trim().toUpperCase();
+
+		const summaryResult = await applyPromotionMutation.mutateAsync({
+			promotionCode: normalizedCode,
+			shippingRateId: shippingRateId || undefined,
+		});
+
+		if (!summaryResult.success) {
+			if (summaryResult.errorCode && isInvalidPromotionError(summaryResult.errorCode)) {
+				await clearReferralRequest();
+
+				queryClient.setQueryData(referralQueryKeys.current(), {
+					code: null,
+				});
+
+				appliedReferralRef.current = null;
+			}
+
+			attemptedReferralRef.current = null;
+
+			toast.error(summaryResult.message);
+
+			return;
+		}
+
+		queryClient.setQueryData(
+			checkoutQueryKeys.summary({
+				cartId: cart?.id,
+				shippingRateId: shippingRateId || undefined,
+				promotionCode: normalizedCode,
+			}),
+			summaryResult.data
+		);
+
+		form.setValue('promotionCode', normalizedCode, {
+			shouldDirty: true,
+			shouldValidate: true,
+		});
+
+		toast.success(summaryResult.message);
+	}
+
+	async function handleRemovePromotion() {
+		const currentPromotion = form.getValues('promotionCode');
+
+		form.setValue('promotionCode', '', {
+			shouldDirty: true,
+			shouldValidate: true,
+		});
+
+		if (currentPromotion && currentPromotion === appliedReferralRef.current) {
+			await clearReferralRequest();
+
+			queryClient.setQueryData(referralQueryKeys.current(), {
+				code: null,
+			});
+
+			appliedReferralRef.current = null;
+			attemptedReferralRef.current = null;
+		}
+	}
+
 	async function handleSubmit(data: ICheckoutFormData) {
 		if (!cart || !checkoutSummary) {
 			return;
@@ -278,6 +395,7 @@ export function CheckoutScreen() {
 					countryCode: cart.market_code,
 				},
 				shippingRateId: data.shippingRateId,
+				promotionCode: data.promotionCode,
 			});
 
 			if (checkoutSessionResult.payment_url) {
@@ -398,8 +516,17 @@ export function CheckoutScreen() {
 						</form>
 					</section>
 
-					<aside className="lg:sticky lg:top-8 lg:block">
+					<aside className="space-y-4 lg:sticky lg:top-8 lg:block">
 						<CheckoutSummaryCard summary={checkoutSummary} />
+
+						<PromotionCodeInput
+							form={form}
+							appliedPromotion={checkoutSummary.promotion ?? null}
+							isApplying={applyPromotionMutation.isPending}
+							errorMessage={applyPromotionMutation.error?.message}
+							onApply={handleApplyPromotion}
+							onRemove={handleRemovePromotion}
+						/>
 					</aside>
 				</div>
 			</div>

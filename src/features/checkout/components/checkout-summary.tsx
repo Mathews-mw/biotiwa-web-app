@@ -52,6 +52,17 @@ export function CheckoutSummary({ summary, marketCode }: CheckoutSummaryProps) {
 					})}
 				/>
 
+				{summary.promotion && summary.promotion.discount_amount > 0 && (
+					<SummaryRow
+						label={`Código ${summary.promotion.code}`}
+						value={`- ${formatMoney({
+							amount: summary.promotion.discount_amount,
+							currency,
+							locale,
+						})}`}
+					/>
+				)}
+
 				<SummaryRow
 					label="Desconto"
 					value={`- ${formatMoney({

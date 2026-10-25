@@ -1,6 +1,7 @@
 import { SiteHeader } from '@/components/layout/site-header';
 import { SiteFooter } from '@/components/layout/site-footer';
 import { FaqSection } from '@/components/landing/faq-section';
+import { ClubSection } from '@/components/landing/club-section';
 import { HeroSection } from '@/components/landing/hero-section';
 import { ScienceSection } from '@/components/landing/science-section';
 import { BenefitsSection } from '@/components/landing/benefits-section';
@@ -24,6 +25,7 @@ export default function HomePage() {
 				<IngredientsSection />
 				<ScienceSection />
 				<ProductDetailsSection />
+				<ClubSection />
 				<ProductOfferSection />
 				<FaqSection />
 				<FinalCtaSection />

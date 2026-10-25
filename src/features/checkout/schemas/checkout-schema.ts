@@ -18,6 +18,7 @@ export const checkoutSchema = z
 		city: z.string().min(2, 'Informe a cidade.').max(80, 'Cidade muito longa.'),
 		state: z.string().min(2, 'Informe o estado.').max(40, 'Estado muito longo.'),
 		shippingRateId: z.string().min(1, 'Selecione uma opção de entrega'),
+		promotionCode: z.string().trim().optional(),
 		acceptPrivacy: z.boolean().refine((value) => value === true, {
 			message: 'Você precisa aceitar os termos e a política de privacidade.',
 		}),
